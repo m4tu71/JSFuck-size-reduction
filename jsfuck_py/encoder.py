@@ -13,7 +13,8 @@ from pathlib import Path
 from .at_optimization import native_string_tokens, optimize_native_at
 from .substring_search import native_suffix_tokens
 from .typed_concat import shortest_concatenation
-from .repetition import repeat_candidates
+from .repetition import repeat_candidates, count_expression
+from .multi_repeat import multi_repeat_candidates, has_multi_repeat
 from .numeric_batch import numeric_batch_candidates, expensive_runs
 from .shared_substrings import shared_string_candidates
 
@@ -154,7 +155,9 @@ def _tokens(text: str, optimize: bool) -> str:
     size = len(text)
     # The repeat method key is expensive; only construct it when a run
     # long enough to justify considering repeat() exists.
-    repeat_key = _tokens("repeat", True) if re.search(r"(.)\1{7}", text, re.DOTALL) else None
+    repeat_key = (_tokens("repeat", True) if
+                  (re.search(r"(.)\1{7}", text, re.DOTALL) or has_multi_repeat(text))
+                  else None)
     best: list[tuple[int, str] | None] = [None] * (size + 1)
     best[size] = (0, "")
     for start in range(size - 1, -1, -1):
@@ -172,6 +175,14 @@ def _tokens(text: str, optimize: bool) -> str:
         if repeat_key is not None:
             choices.extend(
                 repeat_candidates(text, start, mapping, _number, repeat_key)
+            )
+            choices.extend(
+                multi_repeat_candidates(
+                    text, start,
+                    lambda unit: _tokens(unit, True),
+                    lambda count: count_expression(count, mapping, _number),
+                    repeat_key,
+                )
             )
         for end, expression in choices:
             assert best[end] is not None
