@@ -61,3 +61,19 @@ def optimize_native_at(
                for key, value in baseline.items()
                if len(mapping[key]) < len(value)}
     return mapping, changes
+
+def native_string_tokens(baseline: dict[str, str]) -> dict[str, str]:
+    """Whole native-function strings offered as dynamic-programming tokens.
+
+    The recipes are stable snapshots of the base mapping. Using the full
+    native text avoids paying to encode its characters individually.
+    """
+    tokens: dict[str, str] = {}
+    for method in NATIVE_METHODS:
+        if any(ch not in baseline for ch in method):
+            continue
+        key = "+".join(baseline[ch] for ch in method)
+        literal = f"function {method}() {{ [native code] }}"
+        expression = "([]+[][" + key + "])"
+        tokens[literal] = expression
+    return tokens
