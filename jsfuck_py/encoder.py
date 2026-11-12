@@ -152,7 +152,7 @@ def _tokens(text: str, optimize: bool) -> str:
     size = len(text)
     # The repeat method key is expensive; only construct it when a run
     # long enough to justify considering repeat() exists.
-    repeat_key = _tokens("repeat", True) if re.search(r"(.)\\1{7}", text, re.DOTALL) else None
+    repeat_key = _tokens("repeat", True) if re.search(r"(.)\1{7}", text, re.DOTALL) else None
     best: list[tuple[int, str] | None] = [None] * (size + 1)
     best[size] = (0, "")
     for start in range(size - 1, -1, -1):
