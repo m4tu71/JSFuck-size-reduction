@@ -57,6 +57,21 @@ def optimize_native_at(
                 candidate = source + "[" + index_for(offset) + "]"
                 if len(candidate) < len(mapping[character]):
                     mapping[character] = candidate
+    # Iterator objects offer capital letters in "[object Array Iterator]".
+    # A prefixed offset can make the index cheaper than extracting a letter
+    # from a method name or a longer primitive string.
+    if all(ch in baseline for ch in "entries"):
+        iterator_method = "[][" + "+".join(baseline[ch] for ch in "entries") + "]()"
+        for prefix, expression in PREFIXES:
+            source = "(" + expression + "+" + iterator_method + ")"
+            rendered = prefix + "[object Array Iterator]"
+            for offset, character in enumerate(rendered):
+                if character not in mapping:
+                    continue
+                candidate = source + "[" + index_for(offset) + "]"
+                if len(candidate) < len(mapping[character]):
+                    mapping[character] = candidate
+
     changes = {key: (len(value), len(mapping[key]))
                for key, value in baseline.items()
                if len(mapping[key]) < len(value)}
