@@ -120,6 +120,7 @@ def _escape(ch: str) -> str:
     )
 
 
+@lru_cache(maxsize=4096)
 def _tokens(text: str, optimize: bool) -> str:
     mapping = _mapping()
     if not text:
@@ -159,18 +160,27 @@ def _tokens(text: str, optimize: bool) -> str:
                 best[start] = candidate
     assert best[0] is not None
     result = best[0][1]
+    candidates = [result]
     if text[0] in "0123456789":
-        # An initial numeric value is coerced into a string by the next
-        # string-valued operand, avoiding a redundant array wrapper.
+        # A leading numeric primitive can be coerced into a string by the
+        # next string-valued operand. Otherwise force string conversion.
         numeric = _number(int(text[0]))
         if len(text) > 1:
             assert best[1] is not None
-            candidate = numeric + "+" + best[1][1]
+            candidates.append(numeric + "+" + best[1][1])
         else:
-            candidate = numeric + "+[]"
-        baseline = result + ("+[]" if len(text) == 1 else "")
-        return min((baseline, candidate), key=len)
-    return result
+            candidates.append(numeric + "+[]")
+            candidates.append(result + "+[]")
+
+    # Once the prefix is already a string, a trailing JS primitive is
+    # stringified automatically by '+'. This avoids '(primitive+[])'.
+    # Encode the prefix independently to preserve type correctness.
+    for literal, primitive in _SIMPLE.items():
+        if text.endswith(literal) and len(text) > len(literal):
+            prefix = _tokens(text[:-len(literal)], optimize)
+            candidates.append(prefix + "+" + primitive)
+
+    return min(candidates, key=len)
 
 
 def encode(text: str, *, optimize: bool = True, wrap: bool = False,
