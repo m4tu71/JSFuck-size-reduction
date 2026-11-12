@@ -34,6 +34,10 @@ The benchmark reports both access cost and full function-body call cost.
 | `array.find.constructor` | 435 | +53 |
 | `array.sort.constructor` | 463 | +81 |
 | `array.filter.constructor` | 471 | +89 |
+| `array.slice.constructor` | 506 | +124 |
+| `array.entries.constructor` | 507 | +125 |
+| `array.values.constructor` | 514 | +132 |
+| `array.reduce.constructor` | 516 | +134 |
 | `array.join.constructor` | 636 | +254 |
 | `array.constructor.constructor` | 698 | +316 |
 | `number.constructor.constructor` | 701 | +319 |
@@ -41,7 +45,7 @@ The benchmark reports both access cost and full function-body call cost.
 | `string.constructor.constructor` | 703 | +321 |
 | `array.map.constructor` | 1,666 | +1,284 |
 
-The full call has the same relative ordering because the Function body
+The expanded search included 21 standard Array prototype functions and\nfour primitive constructor chains (25 candidates total). All evaluated\nto the same global `Function` in Node.js. `at` remained the shortest.\n\nThe full call has the same relative ordering because the Function body
 payload and invocation suffix are the same across these candidates.
 Examples: `return 42` 588 chars, `return true` 559 chars,
 `console.log(1)` 1,296 chars, `console.log("hello")` 2,995 chars.
