@@ -1,6 +1,6 @@
 # JSFuck size reduction
 
-**Python encoder version:** `0.1.0.dev9` (development; first stable release planned as `0.1.0`).
+**Python encoder version:** `0.1.0.dev10` (development; first stable release planned as `0.1.0`).
 
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
@@ -95,7 +95,7 @@ The reference JSFuck 0.5.0 release is a *separate version*.
 
 To prepare a release after tests pass:
 
-1. Update `jsfuck_py/_version.py` from `0.1.0.dev9` to `0.1.0`
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev10` to `0.1.0`
    (or the next planned version), and update `CHANGELOG.md`.
 2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
    at the merged release commit, then publish its GitHub release.
@@ -260,3 +260,35 @@ python -m benchmarks.fused_wrapper_study
 ```
 
 See `docs/fused-wrapper-study.md` for the limitations and measurements.
+
+## Lexically constrained wrapper fusion (opt-in)
+
+`fuse_wrapped_unicode=True` now supports several simple Unicode string
+literals and multiple JavaScript statements, including safe single-quoted
+strings converted to double-quoted strings. The default remains **off**.
+
+```python
+from jsfuck_py import encode
+
+source = "let name='あ';console.log(name)"
+regular = encode(source, wrap=True)
+fused = encode(source, wrap=True, fuse_wrapped_unicode=True)
+```
+
+On this example, the complete JSFuck output shrinks from 5,896 to
+5,543 characters (353 saved). On the selected 17-case corpus, fusion
+reduces total output from 105,405 to 100,791 (4,614 fewer, 4.38%).
+This corpus includes some cases already supported in dev9 and is not a
+representative JavaScript benchmark.
+
+The converter is intentionally **not a general JavaScript parser**.
+It rejects comments, regex, template literals, escaped strings and
+other ambiguous source constructs, and uses the original encoder when
+not supported or more expensive. Ordinary string mode and parent-scope
+execution are unchanged.
+
+```sh
+python -m benchmarks.lexical_fusion_ablation
+```
+
+Detailed restrictions and evidence: `docs/lexical-fusion-study.md`.
