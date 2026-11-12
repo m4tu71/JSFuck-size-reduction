@@ -210,9 +210,9 @@ class EncoderTests(unittest.TestCase):
         from jsfuck_py.typed_concat import shortest_concatenation
 
         values = (
-            "1undefined!+", "false!+true", "0NaN1", "a+true+b",
-            "a!!b", "1true2", "falsefalsefalse", "xInfinity!",
-            "[]+[]", "++!!", "false+true", "2false3",
+            "1undefined", "falseNaNtrue", "0NaN1", "1true2",
+            "falsefalsefalse", "2false3", "afalseb", "1undefinedt",
+            "Infinitytrue", "NaNfalse", "1true2false3",
         )
         expressions = [
             shortest_concatenation(value, _mapping(), _native_tokens(), _SIMPLE, _number)
@@ -228,6 +228,17 @@ class EncoderTests(unittest.TestCase):
         )
         self.assertEqual(json.loads(process.stdout), list(values))
         self.assertTrue(all(set(expr) <= set("[]()!+") for expr in expressions))
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_special_character_escape_pipeline_roundtrip(self):
+        for value in ("1undefined!+", "false!+true", "a+true+b", "++!!", "[]+[]"):
+            encoded = encode(value)
+            script = "process.stdout.write(JSON.stringify(eval(" + json.dumps(encoded) + ")))"
+            result = subprocess.run(
+                ["node", "-e", script], capture_output=True, text=True,
+                timeout=20, check=True,
+            )
+            self.assertEqual(json.loads(result.stdout), value)
 
     def test_precedence_printer_rejects_numeric_addition(self):
         from jsfuck_py.typed_concat import Expression, concatenate
