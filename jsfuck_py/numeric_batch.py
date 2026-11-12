@@ -50,11 +50,22 @@ def numeric_batch_candidates(
     sep = min(separators, key=lambda ch: len(encode_text(ch)))
 
     output: dict[str, str] = {}
-    methods = (("fromCharCode", _utf16_units(source)),
-               ("fromCodePoint", _code_points(source)))
+    from_char_code = string_constructor + "[" + encode_text("fromCharCode") + "]"
 
-    for method, codes in methods:
-        target = string_constructor + "[" + encode_text(method) + "]"
+    # Uppercase 'P' is not part of the current direct JSFuck mapping.
+    # Bootstrap it from char code 80 when considering fromCodePoint.
+    p_expression = from_char_code + "(" + encode_text("80") + ")"
+    from_code_point_key = "+".join(
+        "(" + p_expression + ")" if char == "P" else encode_text(char)
+        for char in "fromCodePoint"
+    )
+    methods = (
+        ("fromCharCode", _utf16_units(source), from_char_code),
+        ("fromCodePoint", _code_points(source),
+         string_constructor + "[" + from_code_point_key + "]"),
+    )
+
+    for method, codes, target in methods:
         if len(codes) == 1:
             # Single argument: no apply, split or array construction.
             output[method] = target + "(" + encode_text(str(codes[0])) + ")"
