@@ -160,7 +160,7 @@ def _tokens(text: str, optimize: bool) -> str:
                 best[start] = candidate
     assert best[0] is not None
     result = best[0][1]
-    candidates = [result]
+    candidates = [result + "+[]" if len(text) == 1 and text.isdigit() else result]
     if text[0] in "0123456789":
         # A leading numeric primitive can be coerced into a string by the
         # next string-valued operand. Otherwise force string conversion.
@@ -170,7 +170,6 @@ def _tokens(text: str, optimize: bool) -> str:
             candidates.append(numeric + "+" + best[1][1])
         else:
             candidates.append(numeric + "+[]")
-            candidates.append(result + "+[]")
 
     # Once the prefix is already a string, a trailing JS primitive is
     # stringified automatically by '+'. This avoids '(primitive+[])'.
