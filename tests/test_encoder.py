@@ -97,6 +97,33 @@ class EncoderTests(unittest.TestCase):
                                     capture_output=True, timeout=15, check=True)
             self.assertEqual(json.loads(result.stdout), source)
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_native_suffixes(self):
+        from jsfuck_py.encoder import _mapping, _number
+        from jsfuck_py.substring_search import native_suffix_tokens
+
+        choices = native_suffix_tokens(_mapping(), _number)
+        for value in ("at() { [native code] }", "() { [native code] }",
+                      "native code] }", "map() { [native code] }"):
+            with self.subTest(value=value):
+                self.assertIn(value, choices)
+                expression = encode(value)
+                self.assertLess(len(expression), len(encode(value, optimize=False)))
+                program = "process.stdout.write(JSON.stringify(eval(" + json.dumps(expression) + ")))"
+                result = subprocess.run(
+                    ["node", "-e", program], capture_output=True, text=True,
+                    timeout=20, check=True,
+                )
+                self.assertEqual(json.loads(result.stdout), value)
+
+    def test_native_suffix_candidates_are_jsfuck(self):
+        from jsfuck_py.encoder import _mapping, _number
+        from jsfuck_py.substring_search import native_suffix_tokens
+
+        tokens = native_suffix_tokens(_mapping(), _number)
+        self.assertTrue(tokens)
+        self.assertTrue(all(set(expr) <= set("[]()!+") for expr in tokens.values()))
+
     def test_native_method_shortcuts(self):
         # These savings rely on the pinned reference/native function format.
         self.assertEqual(len(encode("native")), 162)
