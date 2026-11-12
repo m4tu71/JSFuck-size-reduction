@@ -28,7 +28,10 @@ def _code_points(source: str) -> tuple[int, ...]:
 
 
 def numeric_batch_candidates(
-    source: str, encode_text: Callable[[str], str]
+    source: str,
+    encode_text: Callable[[str], str],
+    *,
+    separators: tuple[str, ...] = ("f", "a", "t", "e"),
 ) -> dict[str, str]:
     """Create two pure-JSFuck string-returning alternatives.
 
@@ -46,7 +49,8 @@ def numeric_batch_candidates(
     split_key = "[" + encode_text("split") + "]"
 
     # Choose the cheapest delimiter absent from decimal character-code data.
-    separators = ("f", "a", "t", "e")
+    if not separators or any(len(ch) != 1 or ch.isdigit() for ch in separators):
+        raise ValueError("separators must be non-empty single non-digit characters")
     sep = min(separators, key=lambda ch: len(encode_text(ch)))
 
     output: dict[str, str] = {}
