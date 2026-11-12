@@ -3,6 +3,9 @@ import json
 import shutil
 import subprocess
 import unittest
+from unittest.mock import patch
+
+from jsfuck_py import encoder
 
 from jsfuck_py.encoder import _tokens
 from jsfuck_py.dynamic_charcode import dynamic_charcode_candidates
@@ -38,6 +41,29 @@ class DynamicCharCodeStudyTests(unittest.TestCase):
             capture_output=True, text=True, timeout=40, check=True,
         )
         self.assertEqual(json.loads(proc.stdout), expected)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_automatic_candidate_and_wrapper(self):
+        unicode_text = "".join(chr(0x4e00 + i * 11) for i in range(128))
+        with patch.object(encoder, "dynamic_charcode_candidates", return_value={}):
+            previous = encoder.encode(unicode_text)
+        improved = encoder.encode(unicode_text)
+        self.assertLess(len(improved), len(previous))
+        self.assertTrue(set(improved) <= set("[]()!+"))
+
+        source = "globalThis.__output='" + unicode_text + "';"
+        wrapped = encoder.encode(source, wrap=True)
+        script = (
+            "eval(" + json.dumps(improved) + ");"
+            "const value=eval(" + json.dumps(improved) + ");"
+            "eval(" + json.dumps(wrapped) + ");"
+            "process.stdout.write(JSON.stringify([value,globalThis.__output]))"
+        )
+        proc = subprocess.run(
+            ["node", "-e", script], capture_output=True, text=True,
+            check=True, timeout=40,
+        )
+        self.assertEqual(json.loads(proc.stdout), [unicode_text, unicode_text])
 
     def test_bad_delimiters_rejected(self):
         for bad in ((), ("",), ("1",), ("f2",)):
