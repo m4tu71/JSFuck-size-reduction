@@ -16,23 +16,44 @@ from dataclasses import dataclass
 class Expression:
     source: str
     is_string: bool
-    # The complete expression may appear on the right of '+' without
-    # parentheses. Never infer this from its first or last character.
-    atomic_right: bool = False
 
     def as_string(self) -> "Expression":
         if self.is_string:
             return self
-        return Expression(f"({self.source})+[]", True)
+        # Addition is left associative; with an empty array on the right,
+        # intermediate numeric additions complete before string conversion.
+        return Expression(self.source + "+[]", True)
+
+
+def needs_rhs_grouping(source: str) -> bool:
+    """Determine if a JSFuck expression must be grouped as an addend.
+
+    Skip balanced parenthesized and bracketed subexpressions. A leading unary
+    plus would cause a lexical '++' after a binary plus, while top-level
+    additions would change grouping if directly appended on the right.
+    """
+    if source.startswith("+"):
+        return True
+    depth = 0
+    for char in source:
+        if char in "([":
+            depth += 1
+        elif char in ")]":
+            depth -= 1
+            if depth < 0:
+                raise ValueError("Unbalanced JSFuck expression")
+        elif char == "+" and depth == 0:
+            return True
+    if depth != 0:
+        raise ValueError("Unbalanced JSFuck expression")
+    return False
 
 
 def concatenate(left: Expression, right: Expression) -> Expression:
-    """Compose JSFuck expressions without changing JavaScript precedence."""
+    """Compose expressions with correct precedence and string semantics."""
     if not (left.is_string or right.is_string):
         raise ValueError("Two non-string operands can perform numeric addition")
-    rhs = right.source if right.atomic_right else f"({right.source})"
-    # The complete left expression is already valid; binary '+' is left-
-    # associative, so grouping is not needed for an accumulated prefix.
+    rhs = f"({right.source})" if needs_rhs_grouping(right.source) else right.source
     return Expression(left.source + "+" + rhs, True)
 
 
@@ -62,14 +83,14 @@ def shortest_concatenation(
         # The other character mappings are guaranteed string-valued.
         options = [(
             start + 1,
-            Expression(mapping[char], not char.isdigit(), char.isdigit())
+            Expression(mapping[char], not char.isdigit())
         )]
         if char.isascii() and char.isdigit():
             options.append((start + 1, Expression(number(int(char)), False)))
         options.extend(
             (
                 start + len(word),
-                Expression(expr, False, expr in ("![]", "!![]", "[][[]]")),
+                Expression(expr, False),
             )
             for word, expr in primitives.items()
             if text.startswith(word, start)
