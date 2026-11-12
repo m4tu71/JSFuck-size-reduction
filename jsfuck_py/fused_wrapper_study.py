@@ -99,9 +99,15 @@ def unicode_literal_source(source: str) -> str | None:
     return "".join(output) if changed else None
 
 
-def direct_unicode_function_candidate(source: str) -> str | None:
+def direct_unicode_function_candidate(
+    source: str, *, search_spellings: bool = False
+) -> str | None:
     """Generate one Function call for a conservatively rewritten JS source."""
-    transformed = unicode_literal_source(source)
+    if search_spellings:
+        from .escape_spelling_search import best_spelled_source
+        transformed = best_spelled_source(source)
+    else:
+        transformed = unicode_literal_source(source)
     if transformed is None or any(char not in _mapping() for char in transformed):
         return None
     constructor = "[][" + _tokens("at", True) + "][" + _tokens("constructor", True) + "]"
