@@ -146,7 +146,18 @@ def _tokens(text: str, optimize: bool) -> str:
                 best[start] = candidate
     assert best[0] is not None
     result = best[0][1]
-    return result + ("+[]" if len(text) == 1 and text.isdigit() else "")
+    if text[0] in "0123456789":
+        # An initial numeric value is coerced into a string by the next
+        # string-valued operand, avoiding a redundant array wrapper.
+        numeric = _number(int(text[0]))
+        if len(text) > 1:
+            assert best[1] is not None
+            candidate = numeric + "+" + best[1][1]
+        else:
+            candidate = numeric + "+[]"
+        baseline = result + ("+[]" if len(text) == 1 else "")
+        return min((baseline, candidate), key=len)
+    return result
 
 
 def encode(text: str, *, optimize: bool = True, wrap: bool = False,
