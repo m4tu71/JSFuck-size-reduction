@@ -5,7 +5,7 @@ import subprocess
 import unittest
 
 from jsfuck_py.encoder import _tokens
-from jsfuck_py.dynamic_charcode_study import dynamic_charcode_candidates
+from jsfuck_py.dynamic_charcode import dynamic_charcode_candidates
 
 
 class DynamicCharCodeStudyTests(unittest.TestCase):
