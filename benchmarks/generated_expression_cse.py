@@ -21,16 +21,19 @@ CASES = (
 def main() -> None:
     constructor = known_function_constructor(lambda text: _tokens(text, True))
     print("Generated Function constructor expression:", len(constructor), "characters")
-    print(f"{'source':22} {'wrap':>5} {'size':>7} {'count':>6} {'best':>7} {'saving':>7}")
+    print(f"{'source':22} {'wrap':>5} {'size':>7} {'count':>6} {'forced':>8} {'saving':>7}")
     for source, wrap in CASES:
         output = encode(source, wrap=wrap)
         choices = cse_candidates(
             output, constructor=constructor,
             encode_source_string=lambda code: encode(code),
+            improvements_only=False,
         )
-        new = min((len(output), *(len(item[0]) for item in choices)))
+        forced = min((len(item[0]) for item in choices), default=None)
         print(f"{source[:22]!r:22} {str(wrap):>5} {len(output):7} "
-              f"{output.count(constructor):6} {new:7} {len(output)-new:7}")
+              f"{output.count(constructor):6} "
+              f"{str(forced) if forced is not None else '-':>8} "
+              f"{len(output)-forced if forced is not None else 0:7}")
 
 
 if __name__ == "__main__":
