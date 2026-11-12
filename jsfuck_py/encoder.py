@@ -14,6 +14,7 @@ from .at_optimization import native_string_tokens, optimize_native_at
 from .substring_search import native_suffix_tokens
 from .typed_concat import shortest_concatenation
 from .repetition import repeat_candidates
+from .numeric_batch import numeric_batch_candidates
 
 _ALLOWED = frozenset("[]()!+")
 _SIMPLE = {
@@ -266,6 +267,15 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
         )
         reconstructed = prefix + split + suffix
         output = min((direct, reconstructed), key=len)
+
+    # Numeric string reconstruction is expensive to initialize, so consider
+    # it only for sizeable inputs or multiple characters outside the mapping.
+    # Compare the full expression against both existing recovery pipelines.
+    if optimize and (len(text) >= 24 or unmapped_count >= 2):
+        variants = numeric_batch_candidates(
+            text, lambda value: _tokens(value, True)
+        )
+        output = min((output, *variants.values()), key=len)
 
     if wrap:
         function = "[][" + _tokens("at", optimize) + "][" + _tokens("constructor", optimize) + "]"
