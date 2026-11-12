@@ -8,7 +8,7 @@ from urllib.request import urlopen
 from jsfuck_py.encoder import encode
 
 DEFAULT_CASES = [
-    "false", "true", "undefined", "NaN", "Infinity",
+    "0", "1", "2", "01", "10", "1234567890", "false", "true", "undefined", "NaN", "Infinity",
     "hello", "Hello world!", "1234567890", "console.log('hello')",
     "function add(a,b){return a+b}", "あいうえお", "~!~",
 ]
