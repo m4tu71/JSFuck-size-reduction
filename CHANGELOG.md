@@ -11,6 +11,19 @@ Python encoder versions and PEP 440 for development version identifiers.
 - Add machine-readable benchmark reports with version metadata.
 
 
+## 0.1.0.dev3 (development)
+
+- Add a typed dynamic-programming string builder that distinguishes
+  non-string primitives from string-valued prefixes.
+- Avoid redundant string coercions for primitive literals anywhere in a
+  source string, and remove unneeded outer parentheses for standalone
+  `false`, `true`, `undefined`, `NaN` and `Infinity`.
+- Track JavaScript precedence carefully for multi-addition number recipes.
+- Retain a conservative fallback for literal `!+` to avoid ambiguous
+  escape-loader expressions until grammar-aware printing is implemented.
+- Add 120 deterministic mixed-token Node.js roundtrip cases and controlled
+  ablation on both ordinary JavaScript and primitive-heavy inputs.
+
 ## 0.1.0.dev2 (development)
 
 - Search native Array-method source-string suffixes using a one-argument
@@ -30,7 +43,7 @@ Python encoder versions and PEP 440 for development version identifiers.
 ## Versioning policy
 
 - First release target: **0.1.0** (not yet released).
-- Current development version: **0.1.0.dev2**.
+- Current development version: **0.1.0.dev3**.
 - Increase **PATCH** for backwards-compatible bug fixes.
 - Increase **MINOR** for backwards-compatible features and optimization strategies.
 - Increase **MAJOR** for incompatible changes in the public Python API or its output contract.
