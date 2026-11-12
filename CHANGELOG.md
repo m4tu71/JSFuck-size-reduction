@@ -11,6 +11,19 @@ Python encoder versions and PEP 440 for development version identifiers.
 - Add machine-readable benchmark reports with version metadata.
 
 
+## 0.1.0.dev5 (development)
+
+- Explore batched decimal code reconstruction using String.fromCharCode and
+  String.fromCodePoint. Use split plus reduce/apply/bind to pass arrays of
+  numeric strings without literal commas in JSFuck output.
+- Handle UTF-16 surrogate pairs and bootstrap uppercase P via char code 80
+  when spelling fromCodePoint.
+- Compare fully compiled JSFuck output costs with the existing escape-loader
+  strategy, retaining the shortest candidate.
+- Explore long unmapped spans inside a JavaScript source string.
+- Add Unicode/ASCII semantic tests, targeted benchmarks and controlled
+  ablation of the numeric-code strategy.
+
 ## 0.1.0.dev4 (development)
 
 - Replace heuristic typed-expression concatenation with structured expression
@@ -53,7 +66,7 @@ Python encoder versions and PEP 440 for development version identifiers.
 ## Versioning policy
 
 - First release target: **0.1.0** (not yet released).
-- Current development version: **0.1.0.dev4**.
+- Current development version: **0.1.0.dev5**.
 - Increase **PATCH** for backwards-compatible bug fixes.
 - Increase **MINOR** for backwards-compatible features and optimization strategies.
 - Increase **MAJOR** for incompatible changes in the public Python API or its output contract.
