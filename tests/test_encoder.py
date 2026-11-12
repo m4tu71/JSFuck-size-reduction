@@ -31,7 +31,9 @@ class EncoderTests(unittest.TestCase):
         values = ["0", "1", "2", "01", "10", "0abc", "1abc", "3", "false", "true", "undefined", "NaN",
                   "Infinity", "Hello world!", "const x=1;", '"\\',
                   "あ😀", "~!~", "a\nb", "~~", "~~!", "?x?", "\\~\\",
-                  "E:R", "a?b!", "\\" + "\\" + "~", "あい", "😀😀", "t~t~"]
+                  "E:R", "a?b!", "\\" + "\\" + "~", "あい", "😀😀", "t~t~", "xfalse", "xtrue", "xundefined", "xNaN",
+                  "xInfinity", "falsefalse", "1false", "0NaN",
+                  "truefalse", "xfalsefalse"]
         for value in values:
             with self.subTest(value=value):
                 expression = encode(value)
@@ -102,6 +104,12 @@ class EncoderTests(unittest.TestCase):
         for text in ("native", "function add(a,b){return a+b}", "at"):
             with self.subTest(text=text):
                 self.assertLessEqual(len(encode(text)), len(encode(text, optimize=False)))
+
+    def test_trailing_primitive_cost(self):
+        for value in ("xfalse", "xtrue", "xundefined", "xNaN",
+                      "xInfinity", "falsefalse", "truefalse", "1false"):
+            with self.subTest(value=value):
+                self.assertLess(len(encode(value)), len(encode(value, optimize=False)))
 
     def test_optimizer_no_worse_for_direct_mapping(self):
         for value in ["0", "1", "2", "01", "10", "1234", "false", "truefalse", "abc123", "Infinity", "undefined"]:
