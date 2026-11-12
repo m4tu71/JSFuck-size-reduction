@@ -11,6 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from .at_optimization import native_string_tokens, optimize_native_at
+from .substring_search import native_suffix_tokens
 
 _ALLOWED = frozenset("[]()!+")
 _SIMPLE = {
@@ -115,7 +116,10 @@ def _mapping() -> dict[str, str]:
 
 @lru_cache(maxsize=1)
 def _native_tokens() -> dict[str, str]:
-    return native_string_tokens(_mapping())
+    mapping = _mapping()
+    whole = native_string_tokens(mapping)
+    suffixes = native_suffix_tokens(mapping, _number)
+    return {**whole, **suffixes}
 
 
 def _escape(ch: str) -> str:
