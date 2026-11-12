@@ -26,10 +26,11 @@ def cse_candidates(
     constructor: str,
     encode_source_string: Callable[[str], str],
     limit: int = MAX_OUTPUT_LENGTH,
+    improvements_only: bool = True,
 ) -> list[tuple[str, str, int]]:
     """Build viable (output, parameter, occurrence count) candidates.
 
-    This is deliberately a *semantic* target rather than textual substring
+    Set improvements_only=False to inspect the actual cost of losing candidates.\n\n    This is deliberately a *semantic* target rather than textual substring
     replacement over arbitrary JSFuck. A generic replacement might cut through
     operators or property access and change program meaning.
     """
@@ -45,7 +46,7 @@ def cse_candidates(
         body = "return function(" + name + "){return " + rewritten + "}"
         encoded_body = encode_source_string(body)
         expression = constructor + "(" + encoded_body + ")()(" + constructor + ")"
-        if len(expression) < len(output):
+        if not improvements_only or len(expression) < len(output):
             choices.append((expression, name, count))
 
     return sorted(choices, key=lambda candidate: (len(candidate[0]), candidate[1]))
