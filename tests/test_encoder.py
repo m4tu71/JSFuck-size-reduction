@@ -204,6 +204,41 @@ class EncoderTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr[-900:])
         self.assertEqual(json.loads(result.stdout), values)
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_precedence_safe_typed_printer(self):
+        from jsfuck_py.encoder import _SIMPLE, _mapping, _native_tokens, _number
+        from jsfuck_py.typed_concat import shortest_concatenation
+
+        values = (
+            "1undefined!+", "false!+true", "0NaN1", "a+true+b",
+            "a!!b", "1true2", "falsefalsefalse", "xInfinity!",
+            "[]+[]", "++!!", "false+true", "2false3",
+        )
+        expressions = [
+            shortest_concatenation(value, _mapping(), _native_tokens(), _SIMPLE, _number)
+            for value in values
+        ]
+        script = (
+            "const fs=require('fs');const xs=JSON.parse(fs.readFileSync(0,'utf8'));"
+            "process.stdout.write(JSON.stringify(xs.map(x=>eval(x))))"
+        )
+        process = subprocess.run(
+            ["node", "-e", script], input=json.dumps(expressions),
+            text=True, capture_output=True, timeout=30, check=True,
+        )
+        self.assertEqual(json.loads(process.stdout), list(values))
+        self.assertTrue(all(set(expr) <= set("[]()!+") for expr in expressions))
+
+    def test_precedence_printer_rejects_numeric_addition(self):
+        from jsfuck_py.typed_concat import Expression, concatenate
+
+        with self.assertRaises(ValueError):
+            concatenate(Expression("+[]", False), Expression("+!+[]", False))
+        self.assertEqual(
+            concatenate(Expression("[]+[]", True), Expression("!+[]+!+[]", False)).source,
+            "[]+[]+(!+[]+!+[])",
+        )
+
     def test_typed_primitive_reductions(self):
         # Middle tokens are not optimized by the older trailing-token rule.
         from jsfuck_py.encoder import _mapping, _native_tokens, _number, _SIMPLE
