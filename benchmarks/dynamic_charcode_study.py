@@ -5,7 +5,7 @@ from time import perf_counter
 
 from jsfuck_py.encoder import _tokens, encode
 from jsfuck_py.numeric_batch import numeric_batch_candidates
-from jsfuck_py.dynamic_charcode_study import dynamic_charcode_candidates
+from jsfuck_py.dynamic_charcode import dynamic_charcode_candidates
 
 SOURCES = (
     "漢字" * 12,
