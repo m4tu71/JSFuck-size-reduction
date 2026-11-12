@@ -1,5 +1,8 @@
 """Generated-output CSE feasibility tests."""
 import unittest
+import json
+import shutil
+import subprocess
 
 from jsfuck_py.encoder import _tokens, encode
 from jsfuck_py.expression_cse import (
@@ -22,6 +25,30 @@ class ExpressionCSETests(unittest.TestCase):
             ),
             [],
         )
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_forced_candidate_preserves_semantics(self):
+        constructor = known_function_constructor(lambda x: _tokens(x, True))
+        original = constructor + "+[]+" + constructor
+        variants = cse_candidates(
+            original,
+            constructor=constructor,
+            encode_source_string=lambda source: encode(source),
+            improvements_only=False,
+        )
+        self.assertTrue(variants)
+        selected = variants[0][0]
+        self.assertLessEqual(set(selected), set("[]()!+"))
+        script = (
+            "const xs=" + json.dumps([original, selected]) + ";"
+            "process.stdout.write(JSON.stringify(xs.map(x=>eval(x))))"
+        )
+        proc = subprocess.run(
+            ["node", "-e", script], capture_output=True, text=True,
+            check=True, timeout=30,
+        )
+        left, right = json.loads(proc.stdout)
+        self.assertEqual(left, right)
 
     def test_budget_rejects_large_candidate(self):
         constructor = known_function_constructor(lambda x: _tokens(x, True))
