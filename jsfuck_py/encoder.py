@@ -196,9 +196,14 @@ def _tokens(text: str, optimize: bool) -> str:
 
     # Typed DP considers primitive tokens at every position. Keep the
     # previous optimizer as a candidate to avoid regressions.
-    candidates.append(
-        shortest_concatenation(text, mapping, _native_tokens(), _SIMPLE, _number)
-    )
+    # Literal operator characters have complex reference mappings, and a
+    # generic typed addition may create ambiguous ++ / !+ token boundaries.
+    # Use the already validated legacy path until grammar-aware parsing is
+    # available for these cases.
+    if not any(symbol in text for symbol in "!+"):
+        candidates.append(
+            shortest_concatenation(text, mapping, _native_tokens(), _SIMPLE, _number)
+        )
     return min(candidates, key=len)
 
 
