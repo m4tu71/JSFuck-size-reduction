@@ -8,6 +8,64 @@ from jsfuck_py.encoder import encode, _mapping
 
 
 class EncoderTests(unittest.TestCase):
+    def test_shared_helper_identifier_avoidance(self):
+        from jsfuck_py.shared_substrings import helper_names, repeated_candidates
+
+        source = ("const a = 1; let t = 2; var f = 3; " +
+                  "console.log(a+t+f);" * 4)
+        names = helper_names(source, avoid_source_identifiers=True)
+        self.assertTrue(all(name not in ("a", "t", "f") for name in names))
+        self.assertIn("l", names)
+        self.assertEqual(helper_names(source, avoid_source_identifiers=False)[0], "a")
+        self.assertTrue(repeated_candidates(("some-expensive-code;" * 6)))
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_shared_helper_roundtrip_and_scope(self):
+        import json
+        from jsfuck_py.shared_substrings import shared_string_candidates
+        from jsfuck_py.encoder import _tokens
+
+        cases = (
+            "const a=1;console.log(a);" * 5,
+            "const t='漢字';console.log(t);" * 5,
+            ("let a='!' + '漢字😀';" * 4),
+            ("function f(){return 42;}\n" * 6),
+        )
+        constructor = "[][" + _tokens("at", True) + "][" + _tokens("constructor", True) + "]"
+        for source in cases:
+            candidates = shared_string_candidates(
+                source, lambda value: encode(value, share_substrings=False),
+                constructor, avoid_source_identifiers=True,
+            )
+            with self.subTest(source=source[:32]):
+                self.assertTrue(candidates)
+                expr, chunk, name = candidates[0]
+                self.assertTrue(set(expr) <= set("[]()!+"))
+                self.assertNotIn(name, __import__("re").findall(
+                    r"[$A-Za-z_][$A-Za-z_0-9]*", source
+                ))
+                script = "process.stdout.write(JSON.stringify(eval(" + json.dumps(expr) + ")))"
+                result = subprocess.run(
+                    ["node", "-e", script], text=True, capture_output=True,
+                    timeout=30, check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr[-800:])
+                self.assertEqual(json.loads(result.stdout), source)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_shared_opt_in_preserves_string_semantics(self):
+        value = "const a='xyz';console.log(a);" * 5
+        for share in (False, True):
+            expr = encode(value, share_substrings=share)
+            script = "process.stdout.write(JSON.stringify(eval(" + json.dumps(expr) + ")))"
+            result = subprocess.run(
+                ["node", "-e", script], capture_output=True, text=True,
+                timeout=30, check=True,
+            )
+            with self.subTest(share=share):
+                self.assertEqual(json.loads(result.stdout), value)
+                self.assertTrue(set(expr) <= set("[]()!+"))
+
     def test_mapping_alphabet(self):
         self.assertTrue(all(set(v) <= set("[]()!+") for v in _mapping().values()))
 

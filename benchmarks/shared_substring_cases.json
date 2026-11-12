@@ -1,0 +1,7 @@
+[
+  "const value = Math.max(12345, 54321);console.log(value);const value = Math.max(12345, 54321);console.log(value);const value = Math.max(12345, 54321);console.log(value);const value = Math.max(12345, 54321);console.log(value);const value = Math.max(12345, 54321);console.log(value);",
+  "var a=1;let t=2;console.log(a+t);var a=1;let t=2;console.log(a+t);var a=1;let t=2;console.log(a+t);var a=1;let t=2;console.log(a+t);var a=1;let t=2;console.log(a+t);var a=1;let t=2;console.log(a+t);",
+  "function calculate(value){return value*value+value;}\\nfunction calculate(value){return value*value+value;}\\nfunction calculate(value){return value*value+value;}\\nfunction calculate(value){return value*value+value;}\\nfunction calculate(value){return value*value+value;}\\nfunction calculate(value){return value*value+value;}\\n",
+  "const message='ABC123漢字😀';console.log(message);const message='ABC123漢字😀';console.log(message);const message='ABC123漢字😀';console.log(message);const message='ABC123漢字😀';console.log(message);const message='ABC123漢字😀';console.log(message);",
+  "const options={enabled:true,retries:3,verbose:false};const options={enabled:true,retries:3,verbose:false};const options={enabled:true,retries:3,verbose:false};const options={enabled:true,retries:3,verbose:false};const options={enabled:true,retries:3,verbose:false};"
+]

@@ -1,6 +1,6 @@
 # JSFuck size reduction
 
-**Python encoder version:** `0.1.0.dev5` (development; first stable release planned as `0.1.0`).
+**Python encoder version:** `0.1.0.dev6` (development; first stable release planned as `0.1.0`).
 
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
@@ -95,7 +95,7 @@ The reference JSFuck 0.5.0 release is a *separate version*.
 
 To prepare a release after tests pass:
 
-1. Update `jsfuck_py/_version.py` from `0.1.0.dev5` to `0.1.0`
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev6` to `0.1.0`
    (or the next planned version), and update `CHANGELOG.md`.
 2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
    at the merged release commit, then publish its GitHub release.
@@ -162,3 +162,33 @@ python -m benchmarks.numeric_batch_ablation --cases benchmarks/numeric_batch_cas
 
 Batched code points generally have high fixed costs. Small inputs may be
 unchanged; see the research document for measured crossover examples.
+
+## Experimental shared-substring reuse
+
+The new `share_substrings` option is **off by default**. When enabled,
+the Python encoder can generate a private function that accepts a repeated
+string fragment as an argument and reuses it to construct the original
+JavaScript source string. It never injects declarations into the source.
+
+```python
+from jsfuck_py import encode
+
+ordinary = encode("const x=1;" * 6)
+shared = encode(
+    "const x=1;" * 6,
+    share_substrings=True,
+    avoid_source_identifiers=True,
+)
+```
+
+Only select the helper when the **complete** resulting JSFuck expression is
+shorter than the existing encoder output. Variable-name candidates are
+evaluated for total encoded output cost; the optional source-name exclusion
+is conservative because the helper has an isolated scope.
+
+```sh
+python -m benchmarks.shared_substring_ablation
+```
+
+The helper creates a dynamic function at runtime, which may increase execution
+time or fail in environments that block `Function` via CSP.

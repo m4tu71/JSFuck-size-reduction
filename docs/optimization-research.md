@@ -334,3 +334,47 @@ JavaScript examples remained unchanged, as the batch-call setup is costly.
 
 Upstream multi-argument technique:
 https://github.com/aemkei/jsfuck/blob/main/README.md
+
+## 0.1.0.dev6 — sharing repeated substrings through helper parameters
+
+A standalone JSFuck expression cannot directly contain user-defined
+identifiers, so inserting ordinary declarations into the original source
+is not a sound optimization. Instead, construct an isolated helper:
+
+```js
+Function('return function(a){return "prefix"+a+"middle"+a+"suffix"}')()(shared)
+```
+
+This ordinary JavaScript is illustrative only. Both the function body and
+the common `shared` value are themselves encoded to the JSFuck alphabet.
+
+The helper returns the **original source string**, not the result of
+executing it. For `wrap=True`, the existing execution wrapper runs the
+reconstructed source afterward. Therefore the original program is never
+rewritten to insert variables, and helper identifiers have their own scope.
+
+The optimizer probes bounded repeated nonoverlapping substrings of lengths
+16, 32, 64, 128, 256, 512, and 1024, ranks candidates heuristically,
+tests short helper identifiers, and chooses based on **total emitted JSFuck
+length** (including compiled helper body, function constructor and shared
+argument). The default is `share_substrings=False` to retain existing
+output and execution profile. `avoid_source_identifiers=True` is a
+conservative choice; names inside the private helper cannot capture the
+original program's variables, so collisions are not actually possible
+in this architecture.
+
+This is a bounded search, **not a globally optimal common-subexpression
+elimination algorithm**. Dynamic function construction has runtime,
+CSP, compatibility and security implications distinct from ordinary
+string concatenation. The feature should remain experimental until
+measured and tested across a larger corpus.
+
+To measure against the existing Python encoder:
+
+```sh
+python -m benchmarks.shared_substring_ablation
+```
+
+Next experiments: multiple shared fragments, overlapping candidates,
+liveness/cost model and function creation cost, alternative identifier
+alphabets, and long-code timing.

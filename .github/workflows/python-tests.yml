@@ -37,3 +37,4 @@ jobs:
       - run: python -m jsfuck_py.benchmark --cases benchmarks/long_unicode_cases.json
       - run: python -m benchmarks.numeric_batch_ablation
       - run: python -m benchmarks.numeric_batch_ablation --cases benchmarks/numeric_batch_cases.json
+      - run: python -m benchmarks.shared_substring_ablation
