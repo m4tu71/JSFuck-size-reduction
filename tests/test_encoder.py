@@ -243,7 +243,8 @@ class EncoderTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js required")
     def test_repeated_character_tokens(self):
         examples = ("a" * 64, "x" * 32, "0" * 64,
-                    "ab" + "z" * 40 + "cd", "false" * 15)
+                    "ab" + "z" * 40 + "cd", "false" * 15,
+                    "console.log(\'" + "x" * 64 + "\')", "?" * 40)
         expressions = [encode(value) for value in examples]
         script = (
             "const fs=require('fs');const xs=JSON.parse(fs.readFileSync(0,'utf8'));"
