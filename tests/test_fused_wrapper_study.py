@@ -33,6 +33,33 @@ class FusedWrapperStudyTests(unittest.TestCase):
                     actual.append(result.stdout)
                 self.assertEqual(actual[0], actual[1])
 
+    def test_opt_in_selects_only_shorter_safe_candidate(self):
+        eligible = (
+            'console.log("あ")',
+            'console.log("漢字")',
+            'console.log("漢字仮名交じり文")',
+            'console.log("' + "😀😃" * 12 + '")',
+        )
+        for source in eligible:
+            before = encode(source, wrap=True)
+            after = encode(source, wrap=True, fuse_wrapped_unicode=True)
+            candidate = direct_unicode_function_candidate(source)
+            self.assertIsNotNone(candidate)
+            self.assertEqual(len(after), min(len(before), len(candidate)))
+            self.assertLessEqual(set(after), set("[]()!+"))
+
+        # The opt-in must not affect plain-string or parent-scope modes.
+        source = 'console.log("あ")'
+        self.assertEqual(
+            encode(source),
+            encode(source, fuse_wrapped_unicode=True),
+        )
+        self.assertEqual(
+            encode(source, wrap=True, parent_scope=True),
+            encode(source, wrap=True, parent_scope=True,
+                   fuse_wrapped_unicode=True),
+        )
+
     def test_reject_unsupported_syntax(self):
         for source in (
             'console.log("hello")',
