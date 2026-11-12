@@ -13,6 +13,7 @@ from pathlib import Path
 from .at_optimization import native_string_tokens, optimize_native_at
 from .substring_search import native_suffix_tokens
 from .typed_concat import shortest_concatenation
+from .repetition import repeat_candidates
 
 _ALLOWED = frozenset("[]()!+")
 _SIMPLE = {
@@ -149,6 +150,9 @@ def _tokens(text: str, optimize: bool) -> str:
     # Dynamic programming over the actual number of emitted characters.
     # Every segment denotes a string when concatenated with another segment.
     size = len(text)
+    # The repeat method key is expensive; only construct it when a run
+    # long enough to justify considering repeat() exists.
+    repeat_key = _tokens("repeat", True) if re.search(r"(.)\\1{7}", text, re.DOTALL) else None
     best: list[tuple[int, str] | None] = [None] * (size + 1)
     best[size] = (0, "")
     for start in range(size - 1, -1, -1):
@@ -163,6 +167,10 @@ def _tokens(text: str, optimize: bool) -> str:
             for literal, expression in _native_tokens().items()
             if text.startswith(literal, start)
         )
+        if repeat_key is not None:
+            choices.extend(
+                repeat_candidates(text, start, mapping, _number, repeat_key)
+            )
         for end, expression in choices:
             assert best[end] is not None
             tail_length, tail = best[end]
