@@ -1,0 +1,23 @@
+name: Python encoder tests
+on:
+  push:
+    branches: [feat/python-encoder-benchmark]
+  pull_request:
+    paths:
+      - "jsfuck_py/**"
+      - "tests/**"
+      - ".github/workflows/python-tests.yml"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: python -m unittest discover -s tests -v
+      - run: python -m jsfuck_py.benchmark
+      - run: python -m jsfuck_py.benchmark --wrap
