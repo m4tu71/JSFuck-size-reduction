@@ -13,11 +13,12 @@ class EncoderTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js required")
     def test_each_mapped_character(self):
         for character, expression in _mapping().items():
-            program = "try {process.stdout.write(JSON.stringify(eval(" + json.dumps(expression) + "))) } catch(e) {process.stderr.write(e.message);process.exit(1)}"
+            program = "try {process.stdout.write(JSON.stringify(String(eval(" + json.dumps(expression) + ")))) } catch(e) {process.stderr.write(e.message);process.exit(1)}"
             completed = subprocess.run(["node", "-e", program], text=True,
                                        capture_output=True, timeout=10)
-            self.assertEqual(completed.returncode, 0, repr(character) + ": " + completed.stderr)
-            self.assertEqual(str(json.loads(completed.stdout)), character)
+            with self.subTest(character=character):
+                self.assertEqual(completed.returncode, 0, repr(character) + ": " + completed.stderr)
+                self.assertEqual(json.loads(completed.stdout), character)
 
     def test_encoder_output_alphabet(self):
         for value in ["", "0", "false", "true", "undefined", "NaN",
