@@ -138,6 +138,11 @@ def _tokens(text: str, optimize: bool) -> str:
     mapping = _mapping()
     if not text:
         return ""
+    # The legacy optimized grammar can incorrectly join mapping expressions
+    # for a literal '!+' pair. Preserve semantic correctness for this input
+    # family until an expression-tree printer can parenthesize it safely.
+    if optimize and "!+" in text:
+        return _tokens(text, False)
     if not optimize:
         parts = []
         pattern = re.compile("|".join(map(re.escape, _SIMPLE)) + "|.", re.DOTALL)
