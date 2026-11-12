@@ -1,5 +1,7 @@
 # JSFuck size reduction
 
+**Python encoder version:** `0.1.0.dev0` (development; first stable release planned as `0.1.0`).
+
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
 
@@ -11,6 +13,7 @@ The benchmark downloads a pinned copy of the official JSFuck 0.5.0 source from `
 ```sh
 python -m unittest discover -s tests -v
 python -m jsfuck_py.benchmark
+python -m jsfuck_py.benchmark --version
 ```
 
 For your own input set, pass a JSON array of strings using `--cases cases.json`.
@@ -82,3 +85,23 @@ Pinned JSFuck 0.5.0 comparison, string mode (GitHub Actions, Node.js 22):
 Like the upstream encoder, these recipes assume the tested native
 function string format. Test on additional JavaScript engines before
 claiming cross-engine compatibility.
+
+## Versioning and releases
+
+The Python encoder uses Semantic Versioning, with PEP 440 development suffixes.
+The single authoritative version lives in `jsfuck_py/_version.py` and is
+exposed as `jsfuck_py.__version__`. Packaging metadata reads it automatically.
+The reference JSFuck 0.5.0 release is a *separate version*.
+
+To prepare a release after tests pass:
+
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev0` to `0.1.0`
+   (or the next planned version), and update `CHANGELOG.md`.
+2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
+   at the merged release commit, then publish its GitHub release.
+3. Start the next development cycle with a new `.dev0` version.
+
+Do **not** create release tags from a development branch.
+
+The benchmark `--output results.json` includes the Python encoder version,
+reference commit SHA, comparison mode and per-input results for reproducibility.
