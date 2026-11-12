@@ -1,6 +1,6 @@
 # JSFuck size reduction
 
-**Python encoder version:** `0.1.0.dev8` (development; first stable release planned as `0.1.0`).
+**Python encoder version:** `0.1.0.dev9` (development; first stable release planned as `0.1.0`).
 
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
@@ -95,7 +95,7 @@ The reference JSFuck 0.5.0 release is a *separate version*.
 
 To prepare a release after tests pass:
 
-1. Update `jsfuck_py/_version.py` from `0.1.0.dev8` to `0.1.0`
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev9` to `0.1.0`
    (or the next planned version), and update `CHANGELOG.md`.
 2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
    at the merged release commit, then publish its GitHub release.
@@ -233,3 +233,30 @@ python -m benchmarks.interval_batch_ablation
 The interval batch probe found no further reductions on the tested sources;
 it is research-only and does not affect default encoding.
 See `docs/interval-batch-study.md`.
+
+## Experimental Unicode wrapper fusion
+
+The new `fuse_wrapped_unicode` option is **off by default**. For
+`wrap=True` and a simple `console.log("Unicode")` input, it tests a
+directly compiled JavaScript source containing Unicode escape sequences
+instead of first reconstructing that source with an extra `Function`.
+
+```python
+from jsfuck_py import encode
+
+source = 'console.log("あ")'
+ordinary = encode(source, wrap=True)
+fused = encode(source, wrap=True, fuse_wrapped_unicode=True)
+```
+
+On this sample the measured output length was 5,256 → 3,544
+characters (1,712 saved), with equivalent Node.js stdout.
+Other inputs can become longer; the optimizer chooses the shorter
+expression. The feature intentionally **does not** rewrite arbitrary JS
+strings, comments, regexp literals, or identifiers.
+
+```sh
+python -m benchmarks.fused_wrapper_study
+```
+
+See `docs/fused-wrapper-study.md` for the limitations and measurements.

@@ -11,6 +11,18 @@ Python encoder versions and PEP 440 for development version identifiers.
 - Add machine-readable benchmark reports with version metadata.
 
 
+## 0.1.0.dev9 (development)
+
+- Add experimental, opt-in `fuse_wrapped_unicode=True` for a constrained
+  Unicode string literal inside a single console.log call.
+- Compare direct single-Function source compilation with the existing
+  Unicode-restoration and execution wrapper, selecting the shorter complete
+  JSFuck result.
+- Explore UTF-16, hex and Unicode code-point escape representations and
+  verify Node.js side effects.
+- Keep arbitrary JS source, parent-scope wrapping and string mode unchanged;
+  add research benchmarks and document grammar limitations.
+
 ## 0.1.0.dev8 (development)
 
 - Fix the multi-character repeat candidate search to actually cover unit
@@ -100,7 +112,7 @@ Python encoder versions and PEP 440 for development version identifiers.
 ## Versioning policy
 
 - First release target: **0.1.0** (not yet released).
-- Current development version: **0.1.0.dev8**.
+- Current development version: **0.1.0.dev9**.
 - Increase **PATCH** for backwards-compatible bug fixes.
 - Increase **MINOR** for backwards-compatible features and optimization strategies.
 - Increase **MAJOR** for incompatible changes in the public Python API or its output contract.
