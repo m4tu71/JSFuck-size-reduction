@@ -32,7 +32,7 @@ _SOURCE = Path(__file__).with_name("mapping.json")
 def _number(n: int) -> str:
     if n == 0:
         return "+[]"
-    return "+!" + "+!+[]" * (n - 1) + "+[]"
+    return "+!+[]" if n == 1 else "!+[]" + "+!+[]" * (n - 1)
 
 
 def _digit(n: int) -> str:
