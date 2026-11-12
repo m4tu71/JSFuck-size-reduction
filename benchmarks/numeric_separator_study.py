@@ -24,6 +24,12 @@ SOURCES = (
     "@#$" * 15,
     "function x(){return 42;}" * 4,
     "あ",
+    "".join(chr(0x4e00 + i * 7) for i in range(64)),
+    "".join(chr(0x4e00 + i * 11) for i in range(128)),
+    "".join(chr(0x1f600 + i) for i in range(48)),
+    "".join(chr(0x10000 + i * 71) for i in range(64)),
+    "".join(chr(0x3041 + i) for i in range(56)),
+    "const message=\'" + "".join(chr(0x4e00 + i * 13) for i in range(48)) + "\';",
 )
 
 
