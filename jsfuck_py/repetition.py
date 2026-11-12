@@ -7,6 +7,7 @@ the main DP retain the original character mapping whenever shorter.
 from __future__ import annotations
 
 from functools import lru_cache
+from collections.abc import Callable
 
 
 MIN_REPEAT = 8
@@ -27,7 +28,7 @@ def repeat_sizes(run_length: int) -> tuple[int, ...]:
     return tuple(sorted(n for n in initial | large if n <= MAX_REPEAT))
 
 
-def count_expression(count: int, mapping: dict[str, str], number: callable) -> str:
+def count_expression(count: int, mapping: dict[str, str], number: Callable[[int], str]) -> str:
     """Cheapest tested argument; repeat() coerces digit strings to numbers."""
     digits = str(count)
     candidates = [number(count)]
