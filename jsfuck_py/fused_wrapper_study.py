@@ -30,10 +30,17 @@ def direct_unicode_function_candidate(source: str) -> str | None:
         if ord(char) <= 127:
             return char
         raw = char.encode("utf-16-be", errors="surrogatepass")
-        return "".join(
-            "\\u" + raw[i:i + 2].hex()
-            for i in range(0, len(raw), 2)
-        )
+        options = [
+            "".join("\\u" + raw[i:i + 2].hex()
+                    for i in range(0, len(raw), 2))
+        ]
+        # Within a JavaScript string literal, both \xHH and \u{H...}
+        # represent the same character as UTF-16 \uHHHH escapes.
+        if ord(char) <= 0xff:
+            options.append("\\x" + format(ord(char), "02x"))
+        if ord(char) > 0xff:
+            options.append("\\u{" + format(ord(char), "x") + "}")
+        return min(options, key=lambda option: len(_tokens(option, True)))
 
     transformed = prefix + "".join(to_js_escape(ch) for ch in literal) + suffix
     if any(char not in _mapping() for char in transformed):
