@@ -14,7 +14,7 @@ from .at_optimization import native_string_tokens, optimize_native_at
 from .substring_search import native_suffix_tokens
 from .typed_concat import shortest_concatenation
 from .repetition import repeat_candidates
-from .numeric_batch import numeric_batch_candidates
+from .numeric_batch import numeric_batch_candidates, expensive_runs
 
 _ALLOWED = frozenset("[]()!+")
 _SIMPLE = {
@@ -276,6 +276,24 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
             text, lambda value: _tokens(value, True)
         )
         output = min((output, *variants.values()), key=len)
+
+    if optimize and unmapped_count >= 16:
+        # A long non-ASCII segment embedded in ordinary JS can be batched
+        # without converting the cheaper surrounding source to code points.
+        # Limit each call to the two longest runs to bound search overhead.
+        for start, end in expensive_runs(text, mapping)[:2]:
+            if start == 0 and end == len(text):
+                continue
+            prefix = encode(text[:start]) if start else ""
+            suffix = encode(text[end:]) if end < len(text) else ""
+            for batch in numeric_batch_candidates(
+                text[start:end], lambda value: _tokens(value, True)
+            ).values():
+                pieces = [part for part in (prefix, batch, suffix) if part]
+                # Parenthesize each complete string-returning expression.
+                candidate = "+".join("(" + part + ")" for part in pieces)
+                if len(candidate) < len(output):
+                    output = candidate
 
     if wrap:
         function = "[][" + _tokens("at", optimize) + "][" + _tokens("constructor", optimize) + "]"
