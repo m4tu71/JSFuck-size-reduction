@@ -93,8 +93,16 @@ def _expand_mapping() -> dict[str, str]:
         _SOURCE.with_name("backslash_jsfuck_050.b64").read_text(
             encoding="ascii").strip()
     ).decode("ascii")
-    for unstable in ("E", "R", ":", "?"):
-        mapping.pop(unstable, None)
+    # The original Python expansion cannot reconstruct these four
+    # RegExp-derived mappings reliably. Load reproducible, semantically
+    # tested recipes from the pinned official 0.5.0 encoder instead.
+    fallback = json.loads(base64.b64decode(
+        _SOURCE.with_name("reference_fallback_050.b64").read_text(
+            encoding="ascii").strip()
+    ).decode("ascii"))
+    if set(fallback) != {"E", "R", ":", "?"}:
+        raise ValueError("Unexpected pinned fallback character set")
+    mapping.update(fallback)
     mapping, _ = optimize_native_at(mapping, _number)
     assert all(set(v) <= _ALLOWED for v in mapping.values())
     return mapping
