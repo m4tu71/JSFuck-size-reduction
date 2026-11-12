@@ -11,6 +11,13 @@ Python encoder versions and PEP 440 for development version identifiers.
 - Add machine-readable benchmark reports with version metadata.
 
 
+## 0.1.0.dev2 (development)
+
+- Search native Array-method source-string suffixes using a one-argument
+  `slice(start)` expression, selecting candidates by emitted JSFuck cost.
+- Add semantic tests, a 20-snippet JavaScript source corpus, and controlled
+  ablation benchmarks separating old and newly introduced gains.
+
 ## 0.1.0.dev1 (development)
 
 - Choose the shorter of direct escape decoding and placeholder split/join
@@ -23,7 +30,7 @@ Python encoder versions and PEP 440 for development version identifiers.
 ## Versioning policy
 
 - First release target: **0.1.0** (not yet released).
-- Current development version: **0.1.0.dev1**.
+- Current development version: **0.1.0.dev2**.
 - Increase **PATCH** for backwards-compatible bug fixes.
 - Increase **MINOR** for backwards-compatible features and optimization strategies.
 - Increase **MAJOR** for incompatible changes in the public Python API or its output contract.

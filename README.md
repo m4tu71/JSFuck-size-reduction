@@ -1,6 +1,6 @@
 # JSFuck size reduction
 
-**Python encoder version:** `0.1.0.dev1` (development; first stable release planned as `0.1.0`).
+**Python encoder version:** `0.1.0.dev2` (development; first stable release planned as `0.1.0`).
 
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
@@ -95,7 +95,7 @@ The reference JSFuck 0.5.0 release is a *separate version*.
 
 To prepare a release after tests pass:
 
-1. Update `jsfuck_py/_version.py` from `0.1.0.dev1` to `0.1.0`
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev2` to `0.1.0`
    (or the next planned version), and update `CHANGELOG.md`.
 2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
    at the merged release commit, then publish its GitHub release.
@@ -105,3 +105,18 @@ Do **not** create release tags from a development branch.
 
 The benchmark `--output results.json` includes the Python encoder version,
 reference commit SHA, comparison mode and per-input results for reproducibility.
+
+## Native suffix optimization
+
+The Python encoder explores low-cost single-argument `slice(start)` expressions
+for suffixes of native Array-method strings. Use the following commands to
+separate input-specific savings from general-source performance:
+
+```sh
+python -m jsfuck_py.benchmark --cases benchmarks/javascript_samples.json
+python -m benchmarks.ablation
+python -m benchmarks.ablation --cases benchmarks/native_suffix_cases.json
+```
+
+The suffix optimization alone did not reduce output on the 20-source JavaScript
+sample; see `docs/optimization-research.md` for the controlled ablation.

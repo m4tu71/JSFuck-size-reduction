@@ -127,3 +127,53 @@ Selected measured examples (string mode, official -> experimental):
 but these examples are not representative corpus-wide savings. A larger,
 versioned benchmark corpus is the next priority before claiming typical
 performance improvements.
+
+## Native substring suffix experiments (0.1.0.dev2)
+
+The Python optimizer now searches suffixes of the JavaScript engine's native
+Array-method source strings. Unlike two-argument `slice(start, end)`, which
+requires a comma unavailable in JSFuck, the one-argument
+`String(nativeMethod).slice(start)` form can be compiled using only
+`[]()!+`. Candidate expressions are evaluated by **total emitted size**,
+including encoding `slice`, the method name and the offset. Candidates that
+cannot beat individual-character concatenation are discarded before DP.
+
+Pinned JSFuck 0.5.0 baseline, Node.js 22, string-return mode:
+
+| Input | Official | Experimental | Savings |
+|---|---:|---:|---:|
+| `at() { [native code] }` | 2209 | 224 | 89.86% |
+| `() { [native code] }` | 2178 | 210 | 90.36% |
+| `native code] }` | 1707 | 239 | 86.00% |
+| `map() { [native code] }` | 3493 | 1525 | 56.34% |
+
+### Controlled ablation
+
+`python -m benchmarks.ablation --cases benchmarks/native_suffix_cases.json`
+compares the same Python implementation with only suffix candidates disabled.
+On the seven targeted inputs: **7596 → 4389 characters**, 3207 fewer
+(42.22%). The new optimization alone saved **0 characters** over the
+20 JavaScript source snippets in `benchmarks/javascript_samples.json`.
+
+### Non-random JavaScript source sample
+
+The 20 manually selected JavaScript snippets total **62163 characters** in
+pinned official JSFuck and **57638 characters** in the Python encoder:
+4525 fewer (7.28%). Of 20 inputs, 15 are shorter and 5 are tied. These
+gains are **cumulative across previous and current optimizations**, not
+attributable to the new suffix search. This small, intentionally selected
+sample does not establish a population-wide average.
+
+### Interpretation and next steps
+
+- Arbitrary `slice(start, end)` is unavailable syntactically as written
+  because JSFuck cannot contain a literal comma. A two-argument call would
+  need a separately constructed invocation mechanism, whose cost must be
+  justified.
+- Consider adding a typed, cost-first grammar for numeric indices,
+  property access and coercion contexts. This has a plausible route to
+  **general-code** savings not confined to native-method text.
+- Test engine portability beyond Node.js 22 before treating native source
+  representations as universal; source formatting can vary by engine.
+- Profile encoder time on longer inputs; each extra token family increases
+  dynamic-programming candidate checks.
