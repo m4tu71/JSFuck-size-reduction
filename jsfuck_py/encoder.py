@@ -15,6 +15,7 @@ from .substring_search import native_suffix_tokens
 from .typed_concat import shortest_concatenation
 from .repetition import repeat_candidates
 from .numeric_batch import numeric_batch_candidates, expensive_runs
+from .shared_substrings import shared_string_candidates
 
 _ALLOWED = frozenset("[]()!+")
 _SIMPLE = {
@@ -217,7 +218,8 @@ def _tokens(text: str, optimize: bool) -> str:
 
 
 def encode(text: str, *, optimize: bool = True, wrap: bool = False,
-           parent_scope: bool = False) -> str:
+           parent_scope: bool = False, share_substrings: bool = False,
+           avoid_source_identifiers: bool = True) -> str:
     """Encode JavaScript source as a JSFuck expression.
 
     With wrap=False, evaluating the expression yields the original source
@@ -231,7 +233,9 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
     # sees it. Constrain the entire encoding path for the known ambiguous
     # '!+' sequence until expression-level parenthesization is available.
     if optimize and "!+" in text:
-        return encode(text, optimize=False, wrap=wrap, parent_scope=parent_scope)
+        return encode(text, optimize=False, wrap=wrap, parent_scope=parent_scope,
+                      share_substrings=share_substrings,
+                      avoid_source_identifiers=avoid_source_identifiers)
     mapping = _mapping()
     unmapped_count = sum(ch not in mapping for ch in text)
     if not unmapped_count:
@@ -294,6 +298,19 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
                 candidate = "+".join("(" + part + ")" for part in pieces)
                 if len(candidate) < len(output):
                     output = candidate
+
+    if optimize and share_substrings and len(text) >= 32:
+        function = ("[][" + _tokens("at", True) + "]["
+                    + _tokens("constructor", True) + "]")
+        alternatives = shared_string_candidates(
+            text,
+            lambda value: encode(value, share_substrings=False),
+            function,
+            avoid_source_identifiers=avoid_source_identifiers,
+        )
+        for alternative, _shared, _name in alternatives:
+            if len(alternative) < len(output):
+                output = alternative
 
     if wrap:
         function = "[][" + _tokens("at", optimize) + "][" + _tokens("constructor", optimize) + "]"
