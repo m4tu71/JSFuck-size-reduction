@@ -28,7 +28,7 @@ class EncoderTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("node"), "Node.js required for JS semantics")
     def test_roundtrip(self):
-        values = ["0", "3", "false", "true", "undefined", "NaN",
+        values = ["0", "1", "2", "01", "10", "0abc", "1abc", "3", "false", "true", "undefined", "NaN",
                   "Infinity", "Hello world!", "const x=1;", '"\\',
                   "あ😀", "~!~", "a\nb"]
         for value in values:
@@ -82,7 +82,7 @@ class EncoderTests(unittest.TestCase):
         self.assertEqual(completed.stdout.strip(), "42")
 
     def test_optimizer_no_worse_for_direct_mapping(self):
-        for value in ["false", "truefalse", "abc123", "Infinity", "undefined"]:
+        for value in ["0", "1", "2", "01", "10", "1234", "false", "truefalse", "abc123", "Infinity", "undefined"]:
             self.assertLessEqual(len(encode(value)), len(encode(value, optimize=False)))
 
 
