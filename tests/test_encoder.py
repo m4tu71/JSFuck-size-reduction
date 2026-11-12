@@ -27,7 +27,8 @@ class EncoderTests(unittest.TestCase):
                 program = "process.stdout.write(JSON.stringify(eval(" + json.dumps(expression) + ")))"
                 completed = subprocess.run(
                     ["node", "-e", program], text=True, capture_output=True,
-                    timeout=20, check=True)
+                    timeout=20, check=False)
+                self.assertEqual(completed.returncode, 0, completed.stderr[-650:])
                 self.assertEqual(json.loads(completed.stdout), value)
 
     @unittest.skipUnless(shutil.which("node"), "Node.js required for JS semantics")
@@ -37,6 +38,7 @@ class EncoderTests(unittest.TestCase):
         completed = subprocess.run(
             ["node", "-e", script], capture_output=True, text=True,
             timeout=20, check=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr[-650:])
         self.assertEqual(completed.stdout.strip(), "42")
 
     def test_optimizer_no_worse_for_direct_mapping(self):
