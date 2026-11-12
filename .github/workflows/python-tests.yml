@@ -34,3 +34,4 @@ jobs:
       - run: python -m benchmarks.repetition_ablation
       - run: python -m benchmarks.repetition_ablation --cases benchmarks/javascript_samples.json
       - run: python -m jsfuck_py.benchmark --cases benchmarks/numeric_batch_cases.json
+      - run: python -m jsfuck_py.benchmark --cases benchmarks/long_unicode_cases.json
