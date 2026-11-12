@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .at_optimization import native_string_tokens, optimize_native_at
 from .substring_search import native_suffix_tokens
+from .typed_concat import shortest_concatenation
 
 _ALLOWED = frozenset("[]()!+")
 _SIMPLE = {
@@ -193,6 +194,11 @@ def _tokens(text: str, optimize: bool) -> str:
             raw_suffix = "(" + primitive + ")" if primitive.startswith("+") else primitive
             candidates.append(prefix + "+" + raw_suffix)
 
+    # Typed DP considers primitive tokens at every position. Keep the
+    # previous optimizer as a candidate to avoid regressions.
+    candidates.append(
+        shortest_concatenation(text, mapping, _native_tokens(), _SIMPLE, _number)
+    )
     return min(candidates, key=len)
 
 
