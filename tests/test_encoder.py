@@ -61,6 +61,17 @@ class EncoderTests(unittest.TestCase):
                 else:
                     self.assertIn("function Function()", result.stdout)
 
+    def test_return_quote_prefixes(self):
+        for i in range(1, len('return"') + 1):
+            value = 'return"'[:i]
+            expression = encode(value)
+            program = ("try {process.stdout.write(String(eval(" + json.dumps(expression) + "))) }"
+                       "catch(e){process.stderr.write(e.message);process.exit(1)}")
+            result = subprocess.run(["node", "-e", program], capture_output=True, text=True)
+            with self.subTest(value=value):
+                self.assertEqual(result.returncode, 0, result.stderr[-100:])
+                self.assertEqual(result.stdout, value)
+
     def test_wrap(self):
         expression = encode("globalThis.__jsfuck_test = 42", wrap=True)
         script = "eval(" + json.dumps(expression) + ");console.log(globalThis.__jsfuck_test)"
