@@ -1,6 +1,6 @@
 # JSFuck size reduction
 
-**Python encoder version:** `0.1.0.dev6` (development; first stable release planned as `0.1.0`).
+**Python encoder version:** `0.1.0.dev7` (development; first stable release planned as `0.1.0`).
 
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
@@ -95,7 +95,7 @@ The reference JSFuck 0.5.0 release is a *separate version*.
 
 To prepare a release after tests pass:
 
-1. Update `jsfuck_py/_version.py` from `0.1.0.dev6` to `0.1.0`
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev7` to `0.1.0`
    (or the next planned version), and update `CHANGELOG.md`.
 2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
    at the merged release commit, then publish its GitHub release.
@@ -192,3 +192,22 @@ python -m benchmarks.shared_substring_ablation
 
 The helper creates a dynamic function at runtime, which may increase execution
 time or fail in environments that block `Function` via CSP.
+
+## Multi-character repeat candidates
+
+The string DP now considers `String.prototype.repeat` for contiguous runs
+of two- to sixteen-character units. It accounts for the generated property
+key, numeric count, encoded base string and concatenation cost. The optimizer
+retains the previous expression if no strictly shorter candidate exists.
+
+For the selected corpus, multi-character repeat reduces the aggregate output
+from 202,927 to 172,469 characters (15.01%); the corpus is intentionally
+repetition-heavy and does not represent average JavaScript source code.
+
+```sh
+python -m benchmarks.segment_generator_ablation
+python -m benchmarks.generator_segmentation_study
+```
+
+See `docs/segment-generators.md` for analyses of Function escape fusion,
+numeric code batches, native substring extraction and generator sharing.
