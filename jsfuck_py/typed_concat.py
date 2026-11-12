@@ -34,11 +34,11 @@ def shortest_concatenation(
         if current is None or len(candidate) < len(current):
             table[end] = candidate
 
-    def append(prefix: str, expression: str, raw: bool) -> str:
+    def append(prefix: str, expression: str, raw: bool, force_group: bool = False) -> str:
         # Numerical recipes can contain additions of their own. Group them
         # when appended to a string, or `1+1` would become `"x"+true+true`.
         # An array literal is already a single syntactic operand.
-        needs_group = raw and "+" in expression and not expression.startswith("[")
+        needs_group = force_group or (raw and "+" in expression and not expression.startswith("["))
         operand = "(" + expression + ")" if needs_group else expression
         return prefix + "+" + operand
 
@@ -68,9 +68,13 @@ def shortest_concatenation(
                 continue
 
             if string[start] is not None:
-                relax(string, end, append(string[start], expression, not is_string))
+                # Recipes for punctuation can contain nested operator syntax;
+                # group them when placed after binary concatenation.
+                force_group = end == start + 1 and character in "!+"
+                relax(string, end, append(string[start], expression, not is_string, force_group))
             if pending[start] is not None and is_string:
-                relax(string, end, append(pending[start], expression, False))
+                force_group = end == start + 1 and character in "!+"
+                relax(string, end, append(pending[start], expression, False, force_group))
 
     results: list[str] = []
     if string[n] is not None:
