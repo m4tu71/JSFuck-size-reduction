@@ -9,7 +9,11 @@ from __future__ import annotations
 
 from .encoder import _tokens
 
-_NATIVE_FUNCTIONS = ("at", "flat", "filter", "map", "find", "sort", "join", "fill")
+_NATIVE_FUNCTIONS = (
+    "at", "flat", "filter", "map", "find", "sort", "join", "fill",
+    "pop", "push", "slice", "splice", "reduce", "some", "every",
+    "keys", "values", "entries", "reverse", "shift", "unshift",
+)
 
 
 def function_constructor_candidates() -> dict[str, str]:
