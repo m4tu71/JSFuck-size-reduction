@@ -4,8 +4,6 @@ Research-only: candidate grammar limited to simple console.log("...") calls.
 """
 from __future__ import annotations
 
-import json
-
 from jsfuck_py.encoder import encode
 from jsfuck_py.fused_wrapper_study import direct_unicode_function_candidate
 
@@ -13,12 +11,11 @@ CASES = (
     'console.log("あ")',
     'console.log("漢字")',
     'console.log("漢字仮名交じり文")',
-    'console.log("漢字"'.replace('"漢字"', '"漢字"'),  # harmless duplicate control
-    'console.log("' + "漢字".__mul__(12) + '")',
-    'console.log("' + "漢字".__mul__(36) + '")',
-    'console.log("' + "😀😃".__mul__(12) + '")',
-    'console.log("' + "😀😃".__mul__(36) + '")',
-    'console.log("' + "ΩλЖ中".__mul__(24) + '")',
+    'console.log("' + "漢字" * 12 + '")',
+    'console.log("' + "漢字" * 36 + '")',
+    'console.log("' + "😀😃" * 12 + '")',
+    'console.log("' + "😀😃" * 36 + '")',
+    'console.log("' + "ΩλЖ中" * 24 + '")',
     'console.log("hello")',
     'console.log("before" + "漢字")',
     'const x="漢字";console.log(x)',
