@@ -87,7 +87,7 @@ def _expand_mapping() -> dict[str, str]:
         raise ValueError("Mapping expansion did not converge")
     # Preserve the pinned upstream recipe for backslash. Rebuilding it
     # through RegExp can produce runtime-dependent or oversized expressions.
-    mapping["\\\\"] = base64.b64decode(
+    mapping["\\"] = base64.b64decode(
         _SOURCE.with_name("backslash_jsfuck_050.b64").read_text(
             encoding="ascii").strip()
     ).decode("ascii")
