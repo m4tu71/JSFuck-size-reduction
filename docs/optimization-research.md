@@ -177,3 +177,51 @@ sample does not establish a population-wide average.
   representations as universal; source formatting can vary by engine.
 - Profile encoder time on longer inputs; each extra token family increases
   dynamic-programming candidate checks.
+
+## Typed primitive concatenation (0.1.0.dev3)
+
+A new cost-based dynamic program distinguishes two states: a prefix that
+JavaScript guarantees is a string, and a standalone primitive/array prefix.
+The latter may transition to a string only when the next operand guarantees
+string concatenation. Once a string exists, an embedded boolean, undefined
+or number need not be explicitly converted by `+[]`.
+
+The printer encloses arithmetic recipes containing binary `+` when
+concatenating with strings. The generated `!+` literal-input family has a
+known interaction with the escape pipeline; it is conservatively encoded
+through the older checked pathway. This is not proof that the grammar is
+complete or globally shortest.
+
+### Marginal measurements
+
+Controlled ablation disables only the typed DP, holding all existing
+optimizations and the pinned JSFuck 0.5.0 reference constant:
+
+| Corpus | Previous Python | With typed DP | Characters saved |
+|---|---:|---:|---:|
+| 20 JavaScript examples | 57,638 | 57,633 | 5 (0.01%) |
+| 19 primitive-heavy examples | 15,542 | 15,468 | 74 (0.48%) |
+
+Selected official-reference string-mode results:
+
+| Input | JSFuck 0.5.0 | New Python |
+|---|---:|---:|
+| `false` | 8 | 6 |
+| `true` | 9 | 7 |
+| `undefined` | 11 | 9 |
+| `NaN` | 11 | 9 |
+| `Infinity` | 65 | 63 |
+| `falsefalse` | 17 | 10 |
+| `if(true){alert(1)}` | 668 | 502 |
+
+These are small, hand-selected corpora; percentages are not population-wide
+savings. The next research direction is a proper typed expression AST and
+precedence-aware printer, eliminating the need for a special fallback while
+allowing cheap numeric and primitive operations in more contexts.
+
+Run:
+
+```sh
+python -m benchmarks.typed_ablation
+python -m benchmarks.typed_ablation --cases benchmarks/typed_primitive_cases.json
+```
