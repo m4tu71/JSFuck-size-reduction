@@ -11,6 +11,16 @@ Python encoder versions and PEP 440 for development version identifiers.
 - Add machine-readable benchmark reports with version metadata.
 
 
+## 0.1.0.dev4 (development)
+
+- Replace heuristic typed-expression concatenation with structured expression
+  nodes and a precedence-aware JSFuck printer that groups only when needed.
+- Explore cost-based String.prototype.repeat candidates for long runs of
+  individual characters, retaining existing encodings when shorter.
+- Add targeted Node.js semantic tests for precedence, repeat counts, escaped
+  punctuation and deterministic typed-string cases.
+- Add controlled repeat ablation and pinned official reference benchmarks.
+
 ## 0.1.0.dev3 (development)
 
 - Add a typed dynamic-programming string builder that distinguishes
@@ -43,7 +53,7 @@ Python encoder versions and PEP 440 for development version identifiers.
 ## Versioning policy
 
 - First release target: **0.1.0** (not yet released).
-- Current development version: **0.1.0.dev3**.
+- Current development version: **0.1.0.dev4**.
 - Increase **PATCH** for backwards-compatible bug fixes.
 - Increase **MINOR** for backwards-compatible features and optimization strategies.
 - Increase **MAJOR** for incompatible changes in the public Python API or its output contract.
