@@ -1,6 +1,6 @@
 # JSFuck size reduction
 
-**Python encoder version:** `0.1.0.dev3` (development; first stable release planned as `0.1.0`).
+**Python encoder version:** `0.1.0.dev4` (development; first stable release planned as `0.1.0`).
 
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
@@ -95,7 +95,7 @@ The reference JSFuck 0.5.0 release is a *separate version*.
 
 To prepare a release after tests pass:
 
-1. Update `jsfuck_py/_version.py` from `0.1.0.dev3` to `0.1.0`
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev4` to `0.1.0`
    (or the next planned version), and update `CHANGELOG.md`.
 2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
    at the merged release commit, then publish its GitHub release.
@@ -131,3 +131,18 @@ operator-heavy ambiguous cases use a conservative fallback.
 python -m benchmarks.typed_ablation
 python -m benchmarks.typed_ablation --cases benchmarks/typed_primitive_cases.json
 ```
+
+## Repeated-character search (experimental)
+
+The Python encoder now evaluates `String.prototype.repeat` for long runs of
+individual characters. It includes the complete method-call cost, so runs of
+cheap characters may remain unchanged. Example: 32 `x` characters shrink
+from 29,855 to 1,988 JSFuck characters in the pinned comparison.
+
+```sh
+python -m benchmarks.repetition_ablation
+python -m benchmarks.repetition_ablation --cases benchmarks/javascript_samples.json
+python -m jsfuck_py.benchmark --cases benchmarks/repetition_cases.json
+```
+
+These are intentionally selected inputs, not estimates of typical savings.
