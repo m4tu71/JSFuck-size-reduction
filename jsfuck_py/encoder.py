@@ -89,7 +89,7 @@ def _expand_mapping() -> dict[str, str]:
     def text_value(text: str) -> str:
         return "+".join(mapping[ch] for ch in text)
 
-    mapping["\\\\"] = ("([]+[])[" + text_value("constructor") + "]["
+    mapping["\\"] = ("([]+[])[" + text_value("constructor") + "]["
                      + text_value("fromCharCode") + "]("
                      + text_value("92") + ")")
     for unstable in ("E", "R", ":", "?"):
