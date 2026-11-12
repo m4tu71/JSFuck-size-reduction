@@ -76,6 +76,8 @@ class EncoderTests(unittest.TestCase):
             "XYZ" * 16,
             "aaaa" * 20,
             "abcabcxabcabc",
+            "getElementById" * 16,
+            "function(x)" * 12,
         )
         js = ("const fs=require('fs');"
               "const items=JSON.parse(fs.readFileSync(0,'utf8'));"
@@ -107,6 +109,8 @@ class EncoderTests(unittest.TestCase):
         self.assertTrue(has_multi_repeat("abc" * 6))
         self.assertFalse(has_multi_repeat("abcdefghijk"))
         self.assertGreaterEqual(repeated_unit_at("abc" * 6, 0, 3), 6)
+        self.assertTrue(has_multi_repeat("getElementById" * 4))
+        self.assertGreaterEqual(repeated_unit_at("getElementById" * 4, 0, 14), 4)
 
     def test_mapping_alphabet(self):
         self.assertTrue(all(set(v) <= set("[]()!+") for v in _mapping().values()))
