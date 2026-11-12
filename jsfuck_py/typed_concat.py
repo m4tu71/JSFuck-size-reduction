@@ -60,6 +60,8 @@ def shortest_concatenation(
         for end, expression, is_string in choices:
             if start == 0:
                 relax(string if is_string else pending, end, expression)
+                if not is_string:
+                    relax(string, end, "(" + expression + "+[])")
                 continue
 
             if string[start] is not None:
