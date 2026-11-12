@@ -1,12 +1,12 @@
 """Controlled cost study of Function-constructor access in pure JSFuck."""
 from __future__ import annotations
 
-from jsfuck_py.encoder import _tokens, encode
+from jsfuck_py.encoder import encode
 from jsfuck_py.function_constructor_study import (
     function_constructor_candidates, function_wrapper_candidates,
 )
 
-BODIES = ("return 42", "return true", "console.log(1)", 'console.log("あ")')
+BODIES = ("return 42", "return true", "console.log(1)", 'console.log("hello")')
 
 
 def main() -> None:
