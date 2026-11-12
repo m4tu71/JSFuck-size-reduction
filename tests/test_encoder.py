@@ -42,6 +42,25 @@ class EncoderTests(unittest.TestCase):
                 self.assertEqual(json.loads(completed.stdout), value)
 
     @unittest.skipUnless(shutil.which("node"), "Node.js required for JS semantics")
+    def test_components(self):
+        cases = {
+            "at": "at", "constructor": "constructor",
+            "return_quote": 'return"',
+            "function": None,
+        }
+        for key, expected in cases.items():
+            expression = (encode(key) if expected is not None else
+                          "[][" + encode("at") + "][" + encode("constructor") + "]")
+            js = ("try {process.stdout.write(String(eval(" + json.dumps(expression) + "))) }"
+                  "catch(e){process.stderr.write(e.message);process.exit(1)}")
+            result = subprocess.run(["node", "-e", js], capture_output=True, text=True)
+            with self.subTest(key=key):
+                self.assertEqual(result.returncode, 0, result.stderr)
+                if expected is not None:
+                    self.assertEqual(result.stdout, expected)
+                else:
+                    self.assertIn("function Function()", result.stdout)
+
     def test_wrap(self):
         expression = encode("globalThis.__jsfuck_test = 42", wrap=True)
         script = "eval(" + json.dumps(expression) + ");console.log(globalThis.__jsfuck_test)"
