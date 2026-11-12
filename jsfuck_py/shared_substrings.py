@@ -18,7 +18,8 @@ import re
 # Bounded deterministic search: avoids quadratic enumeration on large inputs.
 LENGTHS = (16, 32, 64, 128, 256, 512, 1024)
 MAX_SAMPLES = 600
-MAX_CANDIDATES = 6
+MAX_CANDIDATES = 3
+MAX_VARIABLES = 5
 VARIABLES = ("a", "t", "f", "l", "n", "r", "e", "i", "o",
              "s", "u", "c", "b", "d", "x", "y", "z")
 
@@ -67,6 +68,11 @@ def shared_string_candidates(
     names = helper_names(source, avoid_source_identifiers=avoid_source_identifiers)
     if not names:
         return []
+
+    # Restrict the expensive full-body search to short encoded identifiers.
+    # The final decision uses the complete JSFuck output, not name length.
+    names = tuple(sorted(names, key=lambda name: (len(encode_plain(name)), name))
+                  [:MAX_VARIABLES])
 
     options: list[tuple[str, str, str]] = []
     for word in repeated_candidates(source):
