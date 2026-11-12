@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from contextlib import nullcontext
 from time import perf_counter
 from unittest.mock import patch
 
@@ -25,15 +26,38 @@ CASES = (
 )
 
 
-def measure(sources: tuple[str, ...], label: str) -> None:
-    new_time_start = perf_counter()
-    current = [len(encoder.encode(source)) for source in sources]
-    new_seconds = perf_counter() - new_time_start
+def timed_lengths(
+    sources: tuple[str, ...], *, enable_dynamic: bool, clear_cache: bool
+) -> tuple[list[int], float]:
+    if clear_cache:
+        encoder._tokens.cache_clear()
+    context = (
+        nullcontext() if enable_dynamic else
+        patch.object(encoder, "dynamic_charcode_candidates", return_value={})
+    )
+    with context:
+        started = perf_counter()
+        lengths = [len(encoder.encode(source)) for source in sources]
+        elapsed = perf_counter() - started
+    return lengths, elapsed
 
-    old_time_start = perf_counter()
-    with patch.object(encoder, "dynamic_charcode_candidates", return_value={}):
-        previous = [len(encoder.encode(source)) for source in sources]
-    old_seconds = perf_counter() - old_time_start
+
+def measure(sources: tuple[str, ...], label: str) -> None:
+    # Cold-cache measurement for both variants, in a fixed documented order.
+    previous, old_cold = timed_lengths(
+        sources, enable_dynamic=False, clear_cache=True
+    )
+    current, new_cold = timed_lengths(
+        sources, enable_dynamic=True, clear_cache=True
+    )
+    # Both variants then get the same populated token cache. Timings still
+    # remain rough and must not be treated as calibrated performance claims.
+    _, old_warm = timed_lengths(
+        sources, enable_dynamic=False, clear_cache=False
+    )
+    _, new_warm = timed_lengths(
+        sources, enable_dynamic=True, clear_cache=False
+    )
 
     print(f"CORPUS {label}")
     for source, old, new in zip(sources, previous, current, strict=True):
@@ -42,8 +66,9 @@ def measure(sources: tuple[str, ...], label: str) -> None:
     before, after = sum(previous), sum(current)
     print(f"TOTAL {before} -> {after}; saved {before-after} "
           f"({100*(before-after)/before if before else 0:.2f}%)")
-    print(f"ENCODE elapsed (wall clock, warm caches, non-isolated): "
-          f"old={old_seconds:.3f}s new={new_seconds:.3f}s")
+    print(f"ENCODE elapsed (rough wall clock): "
+          f"cold old={old_cold:.3f}s new={new_cold:.3f}s; "
+          f"warm old={old_warm:.3f}s new={new_warm:.3f}s")
 
 
 def main() -> None:
