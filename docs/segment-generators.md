@@ -66,6 +66,15 @@ candidate family is checked with Node.js roundtrip tests, including
 The ablation benchmark removes only the new candidates, retaining other
 optimizations.
 
+
+### General JavaScript corpus
+
+Controlled ablation on the existing 20 hand-selected ordinary JavaScript
+snippets gives **57,633 → 57,633 characters**: zero incremental savings
+from the new 2–16-character repeat candidates. This is consistent with
+repeat being most helpful for long contiguous repeated patterns, not
+ordinary short expressions.
+
 ## 4. Generator reuse
 
 Sharing the Function constructor after already generating JSFuck was
