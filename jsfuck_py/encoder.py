@@ -339,7 +339,9 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
     # Arbitrary source rewriting can change semantics and is forbidden here.
     if fuse_wrapped_unicode and optimize and wrap and not parent_scope:
         from .fused_wrapper_study import direct_unicode_function_candidate
-        fused = direct_unicode_function_candidate(\n            text, search_spellings=search_escape_spellings\n        )
+        fused = direct_unicode_function_candidate(
+            text, search_spellings=search_escape_spellings
+        )
         if fused is not None and len(fused) < len(output):
             output = fused
 
