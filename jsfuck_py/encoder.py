@@ -10,7 +10,7 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
-from .at_optimization import optimize_native_at
+from .at_optimization import native_string_tokens, optimize_native_at
 
 _ALLOWED = frozenset("[]()!+")
 _SIMPLE = {
@@ -105,6 +105,11 @@ def _mapping() -> dict[str, str]:
     return _expand_mapping()
 
 
+@lru_cache(maxsize=1)
+def _native_tokens() -> dict[str, str]:
+    return native_string_tokens(_mapping())
+
+
 def _escape(ch: str) -> str:
     # Escape UTF-16 code units, matching JavaScript String.charCodeAt.
     units = ch.encode("utf-16-be", errors="surrogatepass")
@@ -138,6 +143,11 @@ def _tokens(text: str, optimize: bool) -> str:
             (start + len(word), "(" + expr + "+[])")
             for word, expr in _SIMPLE.items()
             if text.startswith(word, start)
+        )
+        choices.extend(
+            (start + len(literal), expression)
+            for literal, expression in _native_tokens().items()
+            if text.startswith(literal, start)
         )
         for end, expression in choices:
             assert best[end] is not None
