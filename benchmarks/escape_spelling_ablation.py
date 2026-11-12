@@ -1,12 +1,13 @@
-"""Controlled global Unicode escape spelling study.
+"""Controlled local-versus-whole-source Unicode escape spelling study.
 
-Compare local per-character minimum against the same fused wrapper with
-bounded full-source token-cost substitutions. Default output is unchanged.
+The production encoder and its API remain unchanged: this diagnostic alone
+tests alternative escape spellings before one Function constructor call.
 """
 from __future__ import annotations
 
-from jsfuck_py.encoder import encode
-from jsfuck_py.fused_wrapper_study import direct_unicode_function_candidate
+from jsfuck_py.encoder import _tokens, encode
+from jsfuck_py.fused_wrapper_study import unicode_literal_source
+from jsfuck_py.escape_spelling_search import best_spelled_source
 
 CASES = (
     'console.log("あ")',
@@ -27,22 +28,19 @@ CASES = (
 def main() -> None:
     old_total = new_total = 0
     print(f"{'source':35} {'local':>8} {'global':>8} {'saved':>8} {'selected':>8}")
+    setup = len("[][" + _tokens("at", True) + "][" + _tokens("constructor", True) + "]()()")
     for source in CASES:
-        local = direct_unicode_function_candidate(source)
-        global_best = direct_unicode_function_candidate(
-            source, search_spellings=True
-        )
+        local = unicode_literal_source(source)
+        global_best = best_spelled_source(source)
         assert local is not None and global_best is not None
-        existing = encode(source, wrap=True)
-        selected = encode(
-            source, wrap=True, fuse_wrapped_unicode=True,
-            search_escape_spellings=True,
-        )
-        old_total += min(len(existing), len(local))
-        new_total += len(selected)
-        print(f"{source[:33]!r:35} {len(local):8} {len(global_best):8} "
-              f"{len(local)-len(global_best):8} {len(selected):8}")
-        assert len(global_best) <= len(local)
+        old_cost = setup + len(_tokens(local, True))
+        new_cost = setup + len(_tokens(global_best, True))
+        baseline = len(encode(source, wrap=True, fuse_wrapped_unicode=True))
+        old_total += min(baseline, old_cost)
+        new_total += min(baseline, new_cost)
+        print(f"{source[:33]!r:35} {old_cost:8} {new_cost:8} "
+              f"{old_cost-new_cost:8} {min(baseline, new_cost):8}")
+        assert new_cost <= old_cost
     print(f"Total best-with-local: {old_total} -> {new_total}; "
           f"additional saved: {old_total-new_total}")
 
