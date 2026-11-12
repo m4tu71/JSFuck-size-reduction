@@ -11,6 +11,17 @@ Python encoder versions and PEP 440 for development version identifiers.
 - Add machine-readable benchmark reports with version metadata.
 
 
+## 0.1.0.dev7 (development)
+
+- Evaluate adjacent character generation through Function escape restoration,
+  UTF-16/code-point batching, repeated multi-character units and shared
+  generated expressions.
+- Add bounded 2–16-character repeat candidates to the string token DP,
+  comparing full emitted JSFuck expression costs.
+- Add Node.js roundtrip and execution-wrapper regression tests.
+- Add targeted ablation/segmentation studies and document cases where
+  whole-string restoration beats independent substring encoding.
+
 ## 0.1.0.dev6 (development)
 
 - Add opt-in shared-substring reconstruction through an isolated generated
@@ -76,7 +87,7 @@ Python encoder versions and PEP 440 for development version identifiers.
 ## Versioning policy
 
 - First release target: **0.1.0** (not yet released).
-- Current development version: **0.1.0.dev6**.
+- Current development version: **0.1.0.dev7**.
 - Increase **PATCH** for backwards-compatible bug fixes.
 - Increase **MINOR** for backwards-compatible features and optimization strategies.
 - Increase **MAJOR** for incompatible changes in the public Python API or its output contract.
