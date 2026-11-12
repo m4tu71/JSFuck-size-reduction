@@ -9,7 +9,7 @@ from jsfuck_py.encoder import encode
 
 DEFAULT_CASES = [
     "0", "1", "2", "01", "10", "1234567890", "false", "true", "undefined", "NaN", "Infinity",
-    "hello", "Hello world!", "function", "function function", "native", "at", "console.log('hello')",
+    "hello", "Hello world!", "function", "function function", "function at() { [native code] }", "function map() { [native code] }", "native", "at", "console.log('hello')",
     "function add(a,b){return a+b}", "あいうえお", "~!~",
 ]
 REFERENCE_COMMIT = "6f8fdf31f18a4f2df3bf2576f313b3abeca4c89d"
