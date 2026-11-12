@@ -240,6 +240,33 @@ class EncoderTests(unittest.TestCase):
             )
             self.assertEqual(json.loads(result.stdout), value)
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_repeated_character_tokens(self):
+        examples = ("a" * 64, "x" * 32, "0" * 64,
+                    "ab" + "z" * 40 + "cd", "false" * 15)
+        expressions = [encode(value) for value in examples]
+        script = (
+            "const fs=require('fs');const xs=JSON.parse(fs.readFileSync(0,'utf8'));"
+            "process.stdout.write(JSON.stringify(xs.map(x=>eval(x))))"
+        )
+        completed = subprocess.run(
+            ["node", "-e", script], input=json.dumps(expressions),
+            capture_output=True, text=True, timeout=30, check=True,
+        )
+        self.assertEqual(json.loads(completed.stdout), list(examples))
+        for value, expression in zip(examples[:4], expressions[:4]):
+            self.assertLess(len(expression), len(encode(value, optimize=False)))
+
+    def test_repeat_cost_search(self):
+        from jsfuck_py.repetition import repeat_candidates, repeat_sizes
+        from jsfuck_py.encoder import _mapping, _number
+
+        self.assertEqual(repeat_sizes(7), ())
+        self.assertIn(32, repeat_sizes(64))
+        self.assertTrue(
+            repeat_candidates("x" * 64, 0, _mapping(), _number, encode("repeat"))
+        )
+
     def test_precedence_printer_rejects_numeric_addition(self):
         from jsfuck_py.typed_concat import Expression, concatenate
 
