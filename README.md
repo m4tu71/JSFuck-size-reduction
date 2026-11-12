@@ -1,6 +1,6 @@
 # JSFuck size reduction
 
-**Python encoder version:** `0.1.0.dev7` (development; first stable release planned as `0.1.0`).
+**Python encoder version:** `0.1.0.dev8` (development; first stable release planned as `0.1.0`).
 
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
@@ -95,7 +95,7 @@ The reference JSFuck 0.5.0 release is a *separate version*.
 
 To prepare a release after tests pass:
 
-1. Update `jsfuck_py/_version.py` from `0.1.0.dev7` to `0.1.0`
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev8` to `0.1.0`
    (or the next planned version), and update `CHANGELOG.md`.
 2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
    at the merged release commit, then publish its GitHub release.
@@ -211,3 +211,25 @@ python -m benchmarks.generator_segmentation_study
 
 See `docs/segment-generators.md` for analyses of Function escape fusion,
 numeric code batches, native substring extraction and generator sharing.
+
+## Repeat range verification (dev8)
+
+The repeated-unit DP now **actually** tests unit lengths of 2 through 16.
+Before dev8, the preflight scanner searched up to 16 characters, but the
+candidate generation loop stopped at 8.
+
+A controlled ablation comparing the old 2–8 and new 2–16 candidate ranges
+on 11 repetition-heavy examples found 172,469 → 73,015 characters, a
+99,454-character reduction (57.66%). The 20 ordinary JavaScript examples
+showed no incremental reduction. These percentages do not describe
+typical real-world source-code savings.
+
+```sh
+python -m benchmarks.repeat_range_ablation
+python -m benchmarks.repeat_range_ablation --cases benchmarks/javascript_samples.json
+python -m benchmarks.interval_batch_ablation
+```
+
+The interval batch probe found no further reductions on the tested sources;
+it is research-only and does not affect default encoding.
+See `docs/interval-batch-study.md`.
