@@ -26,7 +26,8 @@ class DynamicCharCodeStudyTests(unittest.TestCase):
         expected = []
         for source in sources:
             for expression in dynamic_charcode_candidates(
-                source, lambda text: _tokens(text, True)
+                source, lambda text: _tokens(text, True),
+                delimiters=("f", "false", "true", "NaN"),
             ).values():
                 self.assertTrue(set(expression) <= set("[]()!+"))
                 expressions.append(expression)
