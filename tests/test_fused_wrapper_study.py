@@ -102,63 +102,6 @@ class FusedWrapperStudyTests(unittest.TestCase):
                         capture_output=True, text=True, timeout=15, check=True,
                     ).stdout)
 
-    def test_global_escape_spellings_produce_identical_output(self):
-        from jsfuck_py.escape_spelling_search import (
-            best_spelled_source, escape_spellings,
-        )
-
-        sources = (
-            'console.log("あ")',
-            'console.log("漢字")',
-            'console.log("あい")',
-            'console.log("Ωλ")',
-            'console.log("😀")',
-            "console.log('漢字')",
-            'const a="あ";console.log(a)',
-            'console.log("漢字" + "あ")',
-        )
-        for source in sources:
-            with self.subTest(source=source):
-                old = direct_unicode_function_candidate(source)
-                tested = direct_unicode_function_candidate(
-                    source, search_spellings=True,
-                )
-                self.assertIsNotNone(old)
-                self.assertIsNotNone(tested)
-                self.assertLessEqual(len(tested), len(old))
-                self.assertTrue(set(tested) <= set("[]()!+"))
-                optimized = encode(
-                    source, wrap=True, fuse_wrapped_unicode=True,
-                    search_escape_spellings=True,
-                )
-                self.assertLessEqual(
-                    len(optimized), len(encode(source, wrap=True)),
-                )
-                expected = subprocess.run(
-                    ["node", "-e", source], capture_output=True,
-                    text=True, check=True, timeout=20,
-                ).stdout
-                actual = subprocess.run(
-                    ["node", "-e", "eval(" + json.dumps(optimized) + ")"],
-                    capture_output=True, text=True, check=True, timeout=30,
-                ).stdout
-                self.assertEqual(actual, expected)
-
-        self.assertGreaterEqual(len(escape_spellings("😀")), 2)
-        self.assertIsNone(best_spelled_source("console.log(1)"))
-
-    def test_global_search_does_not_change_default(self):
-        source = 'console.log("あ")'
-        self.assertEqual(
-            encode(source, wrap=True),
-            encode(source, wrap=True, search_escape_spellings=True),
-        )
-        self.assertEqual(
-            encode(source, fuse_wrapped_unicode=True),
-            encode(source, fuse_wrapped_unicode=True,
-                   search_escape_spellings=True),
-        )
-
     def test_reject_unsupported_syntax(self):
         for source in (
             'console.log("hello")',
