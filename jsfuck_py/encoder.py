@@ -10,6 +10,8 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
+from .at_optimization import optimize_native_at
+
 _ALLOWED = frozenset("[]()!+")
 _SIMPLE = {
     "false": "![]",
@@ -93,6 +95,7 @@ def _expand_mapping() -> dict[str, str]:
     ).decode("ascii")
     for unstable in ("E", "R", ":", "?"):
         mapping.pop(unstable, None)
+    mapping, _ = optimize_native_at(mapping, _number)
     assert all(set(v) <= _ALLOWED for v in mapping.values())
     return mapping
 
