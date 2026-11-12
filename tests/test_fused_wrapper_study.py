@@ -6,7 +6,7 @@ import unittest
 
 from jsfuck_py.encoder import encode
 from jsfuck_py.fused_wrapper_study import (
-    direct_unicode_function_candidate, simple_double_quote_spans,
+    direct_unicode_function_candidate, simple_literal_spans, simple_double_quote_spans,
     unicode_literal_source,
 )
 
@@ -71,6 +71,7 @@ class FusedWrapperStudyTests(unittest.TestCase):
         self.assertIsNotNone(transformed)
         self.assertTrue(all(ord(ch) <= 127 for ch in transformed))
         self.assertIn("console.log(x)", transformed)
+        self.assertEqual(simple_literal_spans("console.log(\'あ\')")[0][2], "\'")
 
     def test_multiple_literals_preserve_console_output(self):
         sources = (
@@ -79,6 +80,10 @@ class FusedWrapperStudyTests(unittest.TestCase):
             'const message="漢字";console.log(message);',
             'let x="😀";console.log(x);console.log("あ");',
             'const x="abc漢字";const y="あ";console.log(x+y);',
+            "console.log('あ')",
+            "console.log('漢字');console.log('あ')",
+            "const message='漢字';console.log(message)",
+            "let name='あ';console.log(name)",
         )
         for source in sources:
             candidate = direct_unicode_function_candidate(source)
@@ -100,8 +105,9 @@ class FusedWrapperStudyTests(unittest.TestCase):
     def test_reject_unsupported_syntax(self):
         for source in (
             'console.log("hello")',
-            "console.log('漢字')",
             'console.log("漢字\\u0041")',
+            "console.log('漢\\u0041')",
+            'console.log(\'漢"字\')',
             'console.log(`漢字`)',
             'console.log(/漢字/)',
             '// "漢字"\\nconsole.log(1)',
