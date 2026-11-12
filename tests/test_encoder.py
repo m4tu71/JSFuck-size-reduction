@@ -295,7 +295,9 @@ class EncoderTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("node"), "Node.js required")
     def test_batched_encoder_roundtrip(self):
-        values = ("☃" * 30, "漢字" * 24, "😀" * 20, "AB" * 40)
+        values = ("☃" * 30, "漢字" * 24, "😀" * 20, "AB" * 40,
+                  "ABC" * 60, "漢字仮名交じり文" * 40,
+                  "const s=\'" + "漢字仮名交じり文" * 30 + "\';")
         for value in values:
             expression = encode(value)
             script = "process.stdout.write(JSON.stringify(eval(" + json.dumps(expression) + ")))"
