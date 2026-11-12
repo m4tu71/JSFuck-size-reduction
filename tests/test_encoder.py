@@ -10,6 +10,15 @@ class EncoderTests(unittest.TestCase):
     def test_mapping_alphabet(self):
         self.assertTrue(all(set(v) <= set("[]()!+") for v in _mapping().values()))
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_each_mapped_character(self):
+        for character, expression in _mapping().items():
+            program = "try {process.stdout.write(JSON.stringify(eval(" + json.dumps(expression) + "))) } catch(e) {process.stderr.write(e.message);process.exit(1)}"
+            completed = subprocess.run(["node", "-e", program], text=True,
+                                       capture_output=True, timeout=10)
+            self.assertEqual(completed.returncode, 0, repr(character) + ": " + completed.stderr)
+            self.assertEqual(str(json.loads(completed.stdout)), character)
+
     def test_encoder_output_alphabet(self):
         for value in ["", "0", "false", "true", "undefined", "NaN",
                       "console.log(1)", "Hello, world!", "あ😀", "~!~"]:
