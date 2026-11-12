@@ -64,7 +64,7 @@ def shortest_concatenation(
             if start == 0:
                 relax(string if is_string else pending, end, expression)
                 if not is_string:
-                    relax(string, end, "(" + expression + "+[])")
+                    relax(string, end, expression + "+[]")
                 continue
 
             if string[start] is not None:
@@ -78,7 +78,7 @@ def shortest_concatenation(
     if pending[n] is not None:
         # Force conversion when the entire input consists of a primitive or
         # a one-character digit array. No untyped value escapes this function.
-        results.append("(" + pending[n] + "+[])")
+        results.append(pending[n] + "+[]")
     if not results:
         raise ValueError("No typed concatenation for input")
     return min(results, key=len)
