@@ -270,6 +270,43 @@ class EncoderTests(unittest.TestCase):
             repeat_candidates("x" * 64, 0, _mapping(), _number, encode("repeat"))
         )
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_batched_character_codes(self):
+        from jsfuck_py.encoder import _tokens
+        from jsfuck_py.numeric_batch import numeric_batch_candidates
+
+        values = (
+            "AB", "a☃", "漢字", "😀", "😀😃",
+            "あ" * 30, "😀" * 20, "Ωλ" * 25,
+            "const msg='" + "☃" * 25 + "';",
+        )
+        for value in values:
+            candidates = numeric_batch_candidates(value, lambda s: _tokens(s, True))
+            for method, expression in candidates.items():
+                with self.subTest(input=value[:15], method=method):
+                    self.assertTrue(set(expression) <= set("[]()!+"))
+                    script = "process.stdout.write(JSON.stringify(eval(" + json.dumps(expression) + ")))"
+                    completed = subprocess.run(
+                        ["node", "-e", script], capture_output=True, text=True,
+                        timeout=30, check=False,
+                    )
+                    self.assertEqual(completed.returncode, 0, completed.stderr[-700:])
+                    self.assertEqual(json.loads(completed.stdout), value)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_batched_encoder_roundtrip(self):
+        values = ("☃" * 30, "漢字" * 24, "😀" * 20, "AB" * 40)
+        for value in values:
+            expression = encode(value)
+            script = "process.stdout.write(JSON.stringify(eval(" + json.dumps(expression) + ")))"
+            completed = subprocess.run(
+                ["node", "-e", script], capture_output=True, text=True,
+                timeout=30, check=False,
+            )
+            with self.subTest(input=value[:10]):
+                self.assertEqual(completed.returncode, 0, completed.stderr[-700:])
+                self.assertEqual(json.loads(completed.stdout), value)
+
     def test_precedence_printer_rejects_numeric_addition(self):
         from jsfuck_py.typed_concat import Expression, concatenate
 
