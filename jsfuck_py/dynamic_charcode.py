@@ -13,7 +13,11 @@ from collections.abc import Callable
 
 from .numeric_batch import _utf16_units
 
-DELIMITERS = ("f", "false", "true", "NaN")
+# Non-digit words are cheap as whole primitive tokens. The benchmark found
+# "false" generally best on long Unicode, with "NaN" a useful fallback.
+# Keep the default search bounded; exhaustive delimiter variants live in
+# benchmarks/numeric_separator_study.py.
+DELIMITERS = ("false", "NaN")
 
 
 def dynamic_charcode_candidates(
