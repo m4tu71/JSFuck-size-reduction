@@ -5,11 +5,12 @@ import subprocess
 from pathlib import Path
 from urllib.request import urlopen
 
+from jsfuck_py import __version__
 from jsfuck_py.encoder import encode
 
 DEFAULT_CASES = [
     "0", "1", "2", "01", "10", "1234567890", "false", "true", "undefined", "NaN", "Infinity",
-    "hello", "Hello world!", "console.log('hello')",
+    "hello", "Hello world!", "A", "I", "Array Iterator", "function", "function function", "function at() { [native code] }", "function map() { [native code] }", "native", "at", "console.log('hello')",
     "function add(a,b){return a+b}", "あいうえお", "~!~",
 ]
 REFERENCE_COMMIT = "6f8fdf31f18a4f2df3bf2576f313b3abeca4c89d"
@@ -27,6 +28,7 @@ process.stdout.write(JSON.stringify(cases.map(x => exports.JSFuck.encode(x, wrap
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--cases", type=Path, help="JSON array of inputs")
     parser.add_argument("--reference", type=Path, help="Use local official jsfuck.js instead of fetching pinned source")
     parser.add_argument("--output", type=Path, help="Write machine-readable JSON results")
@@ -48,6 +50,7 @@ def main() -> None:
                         "python": optimized, "delta": optimized - baseline,
                         "reduction_pct": round(100 * (baseline - optimized) / baseline, 2)
                         if baseline else None})
+    print(f"Encoder: jsfuck-size-reduction {__version__}")
     print(f"Reference: aemkei/jsfuck@{REFERENCE_COMMIT} (JSFuck 0.5.0), wrap={args.wrap}")
     print(f"{'input':24} {'jsfuck.com':>12} {'python':>12} {'delta':>10} {'saving %':>10}")
     for item in results:
@@ -55,7 +58,9 @@ def main() -> None:
               f"{item['python']:12} {item['delta']:10} "
               f"{str(item['reduction_pct']):>10}")
     if args.output:
-        args.output.write_text(json.dumps(results, ensure_ascii=False, indent=2) + "\n",
+        report = {"encoder_version": __version__, "reference_commit": REFERENCE_COMMIT,
+                  "wrap": args.wrap, "results": results}
+        args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n",
                                encoding="utf-8")
 
 

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jsfuck-size-reduction"
+dynamic = ["version"]
+description = "Experimental pure-Python JSFuck size optimizer"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = []
+
+[tool.setuptools.dynamic]
+version = {attr = "jsfuck_py._version.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["jsfuck_py*"]
+
+[tool.setuptools.package-data]
+jsfuck_py = ["mapping.json", "backslash_jsfuck_050.b64"]

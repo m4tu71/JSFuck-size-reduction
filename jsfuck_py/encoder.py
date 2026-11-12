@@ -10,6 +10,8 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
+from .at_optimization import native_string_tokens, optimize_native_at
+
 _ALLOWED = frozenset("[]()!+")
 _SIMPLE = {
     "false": "![]",
@@ -93,6 +95,7 @@ def _expand_mapping() -> dict[str, str]:
     ).decode("ascii")
     for unstable in ("E", "R", ":", "?"):
         mapping.pop(unstable, None)
+    mapping, _ = optimize_native_at(mapping, _number)
     assert all(set(v) <= _ALLOWED for v in mapping.values())
     return mapping
 
@@ -100,6 +103,11 @@ def _expand_mapping() -> dict[str, str]:
 @lru_cache(maxsize=1)
 def _mapping() -> dict[str, str]:
     return _expand_mapping()
+
+
+@lru_cache(maxsize=1)
+def _native_tokens() -> dict[str, str]:
+    return native_string_tokens(_mapping())
 
 
 def _escape(ch: str) -> str:
@@ -135,6 +143,11 @@ def _tokens(text: str, optimize: bool) -> str:
             (start + len(word), "(" + expr + "+[])")
             for word, expr in _SIMPLE.items()
             if text.startswith(word, start)
+        )
+        choices.extend(
+            (start + len(literal), expression)
+            for literal, expression in _native_tokens().items()
+            if text.startswith(literal, start)
         )
         for end, expression in choices:
             assert best[end] is not None

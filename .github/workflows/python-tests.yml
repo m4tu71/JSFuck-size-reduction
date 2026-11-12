@@ -18,6 +18,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - run: python -m pip install --no-deps .
+      - run: python -c "import jsfuck_py; from importlib.metadata import version; assert version('jsfuck-size-reduction') == jsfuck_py.__version__"
       - run: python -m unittest discover -s tests -v
       - run: python -m jsfuck_py.benchmark
       - run: python -m jsfuck_py.benchmark --wrap
