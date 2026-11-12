@@ -16,6 +16,7 @@ from .typed_concat import shortest_concatenation
 from .repetition import repeat_candidates, count_expression
 from .multi_repeat import multi_repeat_candidates, has_multi_repeat
 from .numeric_batch import numeric_batch_candidates, expensive_runs
+from .dynamic_charcode import dynamic_charcode_candidates
 from .shared_substrings import shared_string_candidates
 
 _ALLOWED = frozenset("[]()!+")
@@ -293,6 +294,16 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
             text, lambda value: _tokens(value, True)
         )
         output = min((output, *variants.values()), key=len)
+
+    # A long, heterogeneous Unicode string may be cheaper to reconstruct
+    # by compiling one String.fromCharCode call than by synthesizing the
+    # apply/bind/reduce callback chain in JSFuck. Avoid the extra search for
+    # short strings, and compare complete expressions before selecting.
+    if optimize and 64 <= len(text) <= 1024 and unmapped_count >= 32:
+        dynamic = dynamic_charcode_candidates(
+            text, lambda value: _tokens(value, True)
+        )
+        output = min((output, *dynamic.values()), key=len)
 
     if optimize and unmapped_count >= 16:
         # A long non-ASCII segment embedded in ordinary JS can be batched
