@@ -1,6 +1,6 @@
 # JSFuck size reduction
 
-**Python encoder version:** `0.1.0.dev0` (development; first stable release planned as `0.1.0`).
+**Python encoder version:** `0.1.0.dev1` (development; first stable release planned as `0.1.0`).
 
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
@@ -37,8 +37,8 @@ It expands the official symbol recipes and uses dynamic programming to choose
 between individual-character encodings and built-in multi-character literals.
 
 **Limitations:** This is not a globally optimal JSFuck encoder. The initial
-search does not yet share common subexpressions or optimize the string escape
-loader. Unicode and execution semantics are tested using Node.js. Benchmark
+search does not yet share common subexpressions or exhaustively optimize string
+escape loaders. Unicode and execution semantics are tested using Node.js. Benchmark
 numbers are computed locally; no performance claims are assumed in advance.
 
 ## Current baseline results
@@ -95,7 +95,7 @@ The reference JSFuck 0.5.0 release is a *separate version*.
 
 To prepare a release after tests pass:
 
-1. Update `jsfuck_py/_version.py` from `0.1.0.dev0` to `0.1.0`
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev1` to `0.1.0`
    (or the next planned version), and update `CHANGELOG.md`.
 2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
    at the merged release commit, then publish its GitHub release.
