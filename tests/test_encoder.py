@@ -88,6 +88,20 @@ class EncoderTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout), list(cases))
         self.assertTrue(all(set(x) <= set("[]()!+") for x in expressions))
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_multi_repeat_execution_wrapper(self):
+        source = "globalThis.__multi_repeat='abcabcabcabc';"
+        expression = encode(source, wrap=True)
+        script = (
+            "eval(" + json.dumps(expression) + ");"
+            "process.stdout.write(globalThis.__multi_repeat)"
+        )
+        completed = subprocess.run(
+            ["node", "-e", script], capture_output=True, text=True,
+            timeout=25, check=True,
+        )
+        self.assertEqual(completed.stdout, "abcabcabcabc")
+
     def test_multi_character_repeat_candidate_enumeration(self):
         from jsfuck_py.multi_repeat import has_multi_repeat, repeated_unit_at
         self.assertTrue(has_multi_repeat("abc" * 6))
