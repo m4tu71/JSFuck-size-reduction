@@ -1,6 +1,6 @@
 # JSFuck size reduction
 
-**Python encoder version:** `0.1.0.dev10` (development; first stable release planned as `0.1.0`).
+**Python encoder version:** `0.1.0.dev11` (development; first stable release planned as `0.1.0`).
 
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
@@ -95,7 +95,7 @@ The reference JSFuck 0.5.0 release is a *separate version*.
 
 To prepare a release after tests pass:
 
-1. Update `jsfuck_py/_version.py` from `0.1.0.dev10` to `0.1.0`
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev11` to `0.1.0`
    (or the next planned version), and update `CHANGELOG.md`.
 2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
    at the merged release commit, then publish its GitHub release.
@@ -292,3 +292,30 @@ python -m benchmarks.lexical_fusion_ablation
 ```
 
 Detailed restrictions and evidence: `docs/lexical-fusion-study.md`.
+
+## Function-compiled UTF-16 batches (dev11)
+
+For long strings with many characters outside the direct JSFuck mapping,
+the optimizer now considers a single dynamically compiled
+`String.fromCharCode` call. It uses `split`/`join()` to construct the
+comma-separated argument list without placing commas in the emitted
+JSFuck expression. All output remains restricted to `[]()!+`.
+
+The candidate is considered only for input lengths 64–1024 with at least
+32 unmapped characters, and is selected **only** when its complete JSFuck
+output is shorter. No new public setting is required.
+
+A controlled eight-case Unicode-rich benchmark reduced output from
+144,139 to 137,790 characters (6,349 saved, 4.40%). On 128 distinct
+CJK characters, output dropped from 21,829 to 20,218; on 192 distinct
+CJK characters, 31,766 to 27,028. Twenty ordinary JavaScript samples
+were unchanged. These are small targeted samples, not typical-code
+average savings.
+
+```sh
+python -m benchmarks.dynamic_charcode_ablation
+python -m benchmarks.numeric_separator_study
+```
+
+See `docs/dynamic-charcode-fusion.md` for the full cost model, Unicode
+semantics, reproduction details, and performance caveats.
