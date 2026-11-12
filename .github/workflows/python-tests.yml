@@ -20,17 +20,4 @@ jobs:
           node-version: "22"
       - run: python -m unittest discover -s tests -v
       - run: python -m jsfuck_py.benchmark
-      - name: Export pinned upstream backslash recipe
-        run: |
-          python - <<'PY'
-          import base64
-          import subprocess
-          from urllib.request import urlopen
-          url = "https://raw.githubusercontent.com/aemkei/jsfuck/6f8fdf31f18a4f2df3bf2576f313b3abeca4c89d/jsfuck.js"
-          source = urlopen(url, timeout=20).read().decode("utf-8")
-          js = """const fs=require('fs'); const exports={};
-          new Function('exports',fs.readFileSync(0,'utf8'))(exports);
-          process.stdout.write(exports.JSFuck.encode(String.fromCharCode(92),false,false));"""
-          result = subprocess.run(["node", "-e", js], input=source, capture_output=True, text=True, check=True)
-          print("BACKSLASH_RECIPE_BASE64=" + base64.b64encode(result.stdout.encode()).decode())
-          PY
+      - run: python -m jsfuck_py.benchmark --wrap
