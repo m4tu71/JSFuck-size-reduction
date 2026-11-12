@@ -27,3 +27,6 @@ jobs:
       - run: python -m jsfuck_py.benchmark --cases benchmarks/javascript_samples.json --wrap
       - run: python -m benchmarks.ablation
       - run: python -m benchmarks.ablation --cases benchmarks/native_suffix_cases.json
+      - run: python -m benchmarks.typed_ablation
+      - run: python -m benchmarks.typed_ablation --cases benchmarks/typed_primitive_cases.json
+      - run: python -m benchmarks.typed_ablation --cases benchmarks/typed_primitive_cases.json --wrap
