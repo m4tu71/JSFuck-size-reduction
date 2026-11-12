@@ -1,5 +1,8 @@
 """Research-only JS Unicode escape spelling checks."""
 import unittest
+import json
+import shutil
+import subprocess
 
 from jsfuck_py.encoder import _tokens, encode
 from jsfuck_py.escape_spelling_search import best_spelled_source, escape_spellings
@@ -28,6 +31,27 @@ class EscapeSpellingStudyTests(unittest.TestCase):
                 self.assertLessEqual(len(_tokens(searched, True)),
                                      len(_tokens(local, True)))
                 self.assertTrue(set(_tokens(searched, True)) <= set("[]()!+"))
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_searched_escape_semantics(self):
+        constructor = "[][" + _tokens("at", True) + "][" + _tokens("constructor", True) + "]"
+        for source in (
+            'console.log("あい")',
+            'console.log("😀😃")',
+            "console.log('áéíóú')",
+        ):
+            with self.subTest(source=source):
+                escaped = best_spelled_source(source)
+                expression = constructor + "(" + _tokens(escaped, True) + ")()"
+                result = subprocess.run(
+                    ["node", "-e", "eval(" + json.dumps(expression) + ")"],
+                    capture_output=True, text=True, check=True, timeout=30,
+                )
+                expected = subprocess.run(
+                    ["node", "-e", source],
+                    capture_output=True, text=True, check=True, timeout=15,
+                )
+                self.assertEqual(result.stdout, expected.stdout)
 
     def test_production_output_unchanged(self):
         source = 'console.log("あ")'
