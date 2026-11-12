@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from .repetition import MAX_REPEAT, count_expression
+from .repetition import MAX_REPEAT
+
+MAX_UNIT_LENGTH = 16
 
 
 def repeated_unit_at(text: str, start: int, unit_len: int) -> int:
@@ -27,7 +29,7 @@ def repeated_unit_at(text: str, start: int, unit_len: int) -> int:
 
 def has_multi_repeat(text: str, *, min_copies: int = 3) -> bool:
     """Cheap preflight to avoid paying for a repeat property on normal text."""
-    for length in range(2, 9):
+    for length in range(2, MAX_UNIT_LENGTH + 1):
         for start in range(len(text) - length * min_copies + 1):
             unit = text[start:start + length]
             if text.startswith(unit, start + length) and text.startswith(
