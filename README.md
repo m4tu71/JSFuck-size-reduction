@@ -6,10 +6,9 @@ reference encoder at [jsfuck.com](https://jsfuck.com/).
 ## Setup
 
 Python 3.10+ (no runtime dependencies). Node.js is used to execute semantic tests.
-To run the benchmark, install the official JSFuck npm package in this directory:
+The benchmark downloads a pinned copy of the official JSFuck 0.5.0 source from `aemkei/jsfuck` (not the outdated npm release). To run:
 
 ```sh
-npm install --no-save jsfuck
 python -m unittest discover -s tests -v
 python -m jsfuck_py.benchmark
 ```
