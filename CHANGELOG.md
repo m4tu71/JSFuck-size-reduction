@@ -1,0 +1,23 @@
+# Changelog
+
+This project uses [Semantic Versioning](https://semver.org/) for released
+Python encoder versions and PEP 440 for development version identifiers.
+
+## Unreleased
+
+- Add a Python encoder based on upstream JSFuck 0.5.0.
+- Compare against a pinned official JSFuck encoder with semantic tests.
+- Add cost-based character recipes and native-function string tokens.
+- Add machine-readable benchmark reports with version metadata.
+
+## Versioning policy
+
+- First release target: **0.1.0** (not yet released).
+- Current development version: **0.1.0.dev0**.
+- Increase **PATCH** for backwards-compatible bug fixes.
+- Increase **MINOR** for backwards-compatible features and optimization strategies.
+- Increase **MAJOR** for incompatible changes in the public Python API or its output contract.
+- Use `vX.Y.Z` Git tags and matching GitHub releases for stable versions.
+- Do not tag or release a development PR before it has been merged.
+
+The official JSFuck version is a **reference dependency**, not this project's version.
