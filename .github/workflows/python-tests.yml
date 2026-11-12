@@ -40,3 +40,4 @@ jobs:
       - run: python -m benchmarks.shared_substring_ablation
       - run: python -m benchmarks.generated_expression_cse
       - run: python -m benchmarks.segment_generator_ablation
+      - run: python -m benchmarks.generator_segmentation_study
