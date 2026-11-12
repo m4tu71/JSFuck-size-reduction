@@ -20,6 +20,9 @@ class DynamicCharCodeStudyTests(unittest.TestCase):
             "😀😃",
             "ΩλЖ中",
             "a\x00b",
+            "\ud800",
+            "\udc00",
+            "\ud800x\udc00",
             "".join(chr(0x4e00 + i * 7) for i in range(32)),
         )
         expressions = []
