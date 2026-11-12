@@ -147,9 +147,9 @@ class EncoderTests(unittest.TestCase):
 
     def test_interval_windows_include_merged_runs(self):
         from jsfuck_py.interval_search import batch_windows
-        source = "漢" * 10 + "abc" + "字" * 10
+        source = "prefix" + "漢" * 10 + "abc" + "字" * 10 + "suffix"
         runs = batch_windows(source, _mapping())
-        self.assertIn((0, len(source)), runs)
+        self.assertIn((6, len(source) - 6), runs)
 
     def test_mapping_alphabet(self):
         self.assertTrue(all(set(v) <= set("[]()!+") for v in _mapping().values()))
