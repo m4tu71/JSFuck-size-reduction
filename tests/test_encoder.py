@@ -49,7 +49,7 @@ class EncoderTests(unittest.TestCase):
             "function": None,
         }
         for key, expected in cases.items():
-            expression = (encode(key) if expected is not None else
+            expression = (encode(expected) if expected is not None else
                           "[][" + encode("at") + "][" + encode("constructor") + "]")
             js = ("try {process.stdout.write(String(eval(" + json.dumps(expression) + "))) }"
                   "catch(e){process.stderr.write(e.message);process.exit(1)}")
