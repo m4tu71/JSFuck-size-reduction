@@ -281,3 +281,56 @@ and 38,592 characters for the 40-`z` case; the new Python encoder returns
   parity in other runtimes.
 
 Reference: https://github.com/aemkei/jsfuck/blob/main/README.md
+
+## 0.1.0.dev5 — batched ASCII and Unicode numbers
+
+The pure-JSFuck output cannot contain a comma, so a literal call like
+`String.fromCharCode(65,66)` is not directly expressible. The Python
+optimizer constructs the equivalent call using a packed decimal string
+(e.g. `"65f66"`), `.split("f")` to produce argument strings, and the
+multi-argument invocation technique `[[], arguments].reduce(
+String.fromCharCode.apply.bind(String.fromCharCode))`.
+All property names and data are expanded to the JSFuck alphabet.
+
+Two candidates are compared:
+- `fromCharCode` uses UTF-16 code units (supplementary code points need
+  high and low surrogate values), including lone surrogate preservation.
+- `fromCodePoint` accepts Unicode scalar or surrogate code points directly.
+  The currently unmapped uppercase `P` in the property name is synthesized
+  via `String.fromCharCode(80)`, adding a one-time cost.
+
+The encoder compares **complete emitted lengths** with its normal
+escape-loader output. It can batch a whole input or a long contiguous
+unmapped span; the surrounding text is encoded separately. Both methods
+are validated by Node.js roundtrip tests, but other JS engines are not
+yet covered.
+
+### Marginal measurement (pinned JSFuck 0.5.0 / Node.js 22)
+
+| Selected sample | Without batch | With batch | Saved |
+|---|---:|---:|---:|
+| Japanese phrase repeated 40 times (320 chars) | 50,797 | 49,689 | 1,108 (2.18%) |
+| 8-emoji sequence repeated 30 times (240 code points) | 62,167 | 53,555 | 8,612 (13.85%) |
+| `ΩλЖ中` repeated 40 times (160 chars) | 33,757 | 29,729 | 4,028 (11.93%) |
+| `ABC` repeated 60 times (180 chars) | 143,999 | 28,769 | 115,230 (80.02%) |
+| 30 snowman characters | 6,967 | 6,967 | 0 |
+
+These are selected examples, **not a typical performance estimate**.
+The 8 Unicode-oriented long samples collectively drop from 273,732 to
+259,984 characters (5.02%); the improvement is concentrated in 3 inputs.
+Short Unicode strings and Unicode strings embedded in the current tested
+JavaScript examples remained unchanged, as the batch-call setup is costly.
+
+### Next experiments
+
+- Faster construction of numeric argument arrays. `reduce`, `apply`,
+  `bind`, `split` and `concat` have a substantial fixed cost.
+- Variable-length character-code packing, dynamic separators, radix or
+  code-point delta coding, with decoding cost included.
+- General DP segmentation over long mapped/unmapped stretches rather than
+  only one or two contiguous expensive runs.
+- Corpus-wide runtime cost in addition to output length.
+- More engines: native-function text and property availability differ.
+
+Upstream multi-argument technique:
+https://github.com/aemkei/jsfuck/blob/main/README.md
