@@ -187,7 +187,7 @@ class EncoderTests(unittest.TestCase):
             ["node", "-e", script], input=json.dumps(expressions),
             capture_output=True, text=True, check=False, timeout=40,
         )
-        self.assertEqual(result.returncode, 0, result.stderr[-900:])
+        self.assertEqual(result.returncode, 0, "input 62=" + repr(values[62]) + "; expression=" + expressions[62][:350] + "; " + result.stderr[-250:])
         self.assertEqual(json.loads(result.stdout), values)
 
     def test_typed_primitive_reductions(self):
