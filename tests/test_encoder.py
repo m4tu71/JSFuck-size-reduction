@@ -138,6 +138,38 @@ class EncoderTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertLess(len(encode(value)), len(encode(value, optimize=False)))
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_typed_primitive_tokens_in_middle(self):
+        values = (
+            "afalseb", "atruen", "xundefinedy", "xNaNy",
+            "aInfinityb", "falsefalsefalse", "1true2", "0NaN1",
+            "false0true", "1false2true3", "truefalse",
+        )
+        for value in values:
+            with self.subTest(value=value):
+                result = encode(value)
+                program = (
+                    "process.stdout.write(JSON.stringify(eval(" +
+                    json.dumps(result) + ")))"
+                )
+                completed = subprocess.run(
+                    ["node", "-e", program], capture_output=True, text=True,
+                    timeout=20, check=True,
+                )
+                self.assertEqual(json.loads(completed.stdout), value)
+                self.assertLessEqual(len(result), len(encode(value, optimize=False)))
+
+    def test_typed_primitive_reductions(self):
+        # Middle tokens are not optimized by the older trailing-token rule.
+        from jsfuck_py.encoder import _mapping, _native_tokens, _number, _SIMPLE
+        from jsfuck_py.typed_concat import shortest_concatenation
+
+        text = "afalseb"
+        candidate = shortest_concatenation(
+            text, _mapping(), _native_tokens(), _SIMPLE, _number
+        )
+        self.assertLess(len(candidate), len(encode(text, optimize=False)))
+
     def test_optimizer_no_worse_for_direct_mapping(self):
         for value in ["0", "1", "2", "01", "10", "1234", "false", "truefalse", "abc123", "Infinity", "undefined"]:
             self.assertLessEqual(len(encode(value)), len(encode(value, optimize=False)))
