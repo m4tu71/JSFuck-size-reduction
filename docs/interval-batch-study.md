@@ -8,7 +8,23 @@ candidates with units of length 2 through 16. Inspection found a mismatch:
 only created candidates for units of length **2 through 8**.
 
 This branch fixes the candidate-generation limit to 16 and verifies
-semantics against Node.js. A targeted ablation compares the same Python
+semantics against Node.js.
+
+### Verified incremental repeat-range results (Node.js 22)
+
+| Input | Prior 2–8 units | Current 2–16 units | Saved |
+|---|---:|---:|---:|
+| `function(x)` repeated 24 | 28,361 | 2,330 | 26,031 |
+| `console.log(` repeated 24 | 20,255 | 3,582 | 16,673 |
+| `let value=42;` repeated 20 | 26,019 | 2,345 | 23,674 |
+| `getElementById` repeated 24 | 33,281 | 7,619 | 25,662 |
+| `漢字` repeated 24 (after escape expansion) | 13,669 | 6,255 | 7,414 |
+
+Across the 11 repetition-focused samples, 172,469 → 73,015
+(**99,454 fewer, 57.66%**). The 20 ordinary JavaScript snippets were
+unchanged (57,633 → 57,633). These are targeted small corpora and are
+not representative real-world average savings.
+ A targeted ablation compares the same Python
 encoder with 2–8 and 2–16 unit lengths; it does not conflate the original
 one-character or previously implemented 2–8 optimizations with the
 incremental improvement.
