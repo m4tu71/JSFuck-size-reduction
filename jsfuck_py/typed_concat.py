@@ -35,8 +35,11 @@ def shortest_concatenation(
             table[end] = candidate
 
     def append(prefix: str, expression: str, raw: bool) -> str:
-        # A trailing unary plus must be grouped after binary addition.
-        operand = "(" + expression + ")" if raw and expression.startswith("+") else expression
+        # Numerical recipes can contain additions of their own. Group them
+        # when appended to a string, or `1+1` would become `"x"+true+true`.
+        # An array literal is already a single syntactic operand.
+        needs_group = raw and "+" in expression and not expression.startswith("[")
+        operand = "(" + expression + ")" if needs_group else expression
         return prefix + "+" + operand
 
     # Every candidate is (end_offset, expression, guarantees_string).
