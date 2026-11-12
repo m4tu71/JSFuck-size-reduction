@@ -17,36 +17,46 @@ from .encoder import _mapping, _tokens
 MAX_SOURCE_LENGTH = 4096
 
 
-def simple_double_quote_spans(source: str) -> tuple[tuple[int, int], ...]:
-    """Locate plain quoted literals, rejecting ambiguous lexical contexts.
+def simple_literal_spans(source: str) -> tuple[tuple[int, int, str], ...]:
+    """Identify unescaped single/double-quoted literals in a limited JS subset.
 
-    Exclude single quotes, template literals, comments, regex literals,
-    escapes, and non-ASCII text outside literals. The returned half-open
-    ranges contain the literal content, excluding quote characters.
+    Single quotes are normalized to double quotes, so they must not contain
+    literal double quotes. Backslash escapes, comments, regular expressions,
+    and template literals require an ECMAScript lexer and are rejected.
     """
     if len(source) > MAX_SOURCE_LENGTH:
         return ()
 
-    spans: list[tuple[int, int]] = []
+    spans: list[tuple[int, int, str]] = []
     index = 0
     while index < len(source):
         char = source[index]
-        if char == '"':
+        if char in ("'", '"'):
+            quote = char
             start = index + 1
             index = start
-            while index < len(source) and source[index] != '"':
-                if source[index] in "\\\r\n" or 0xD800 <= ord(source[index]) <= 0xDFFF:
+            while index < len(source) and source[index] != quote:
+                current = source[index]
+                if current in "\\\r\n" or 0xD800 <= ord(current) <= 0xDFFF:
+                    return ()
+                if quote == "'" and current == '"':
                     return ()
                 index += 1
             if index == len(source):
                 return ()
-            spans.append((start, index))
-        elif char in "'`/\\":  # Could be quote, template, regexp or comment.
-            return ()
-        elif ord(char) > 127:
+            spans.append((start, index, quote))
+        elif char in "`/\\" or ord(char) > 127:
             return ()
         index += 1
     return tuple(spans)
+
+
+def simple_double_quote_spans(source: str) -> tuple[tuple[int, int], ...]:
+    """Legacy helper exposing spans of double-quoted-only safe input."""
+    spans = simple_literal_spans(source)
+    if any(quote != '"' for _, _, quote in spans):
+        return ()
+    return tuple((start, end) for start, end, _ in spans)
 
 
 @lru_cache(maxsize=512)
@@ -65,23 +75,26 @@ def _unicode_escaped(char: str) -> str:
 
 
 def unicode_literal_source(source: str) -> str | None:
-    """Convert Unicode only inside verified unescaped double-quoted strings."""
-    spans = simple_double_quote_spans(source)
+    """Convert Unicode in safe literals, normalizing simple single quotes."""
+    spans = simple_literal_spans(source)
     if not spans:
         return None
 
     output: list[str] = []
     position = 0
     changed = False
-    for start, end in spans:
-        output.append(source[position:start])
+    for start, end, quote in spans:
+        # Opening quote is at start-1; close quote is at end.
+        output.append(source[position:start - 1])
+        output.append('"')
         content = source[start:end]
         changed |= any(ord(char) > 127 for char in content)
         output.append("".join(
             char if ord(char) <= 127 else _unicode_escaped(char)
             for char in content
         ))
-        position = end
+        output.append('"')
+        position = end + 1
     output.append(source[position:])
     return "".join(output) if changed else None
 
