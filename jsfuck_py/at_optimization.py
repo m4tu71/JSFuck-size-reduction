@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-NATIVE_AT_TEXT = "function at() { [native code] }"
 NATIVE_METHODS = ("at", "flat", "fill", "find", "map", "filter", "join", "sort", "entries")
 
 # (runtime prefix, JSFuck expression). Expression prefixes must be coerced
@@ -30,8 +29,10 @@ def optimize_native_at(
 ) -> tuple[dict[str, str], dict[str, tuple[int, int]]]:
     """Return a new mapping and {character: (old_size, new_size)} improvements."""
     mapping = baseline.copy()
-    changes = {}
 
+    from functools import lru_cache
+
+    @lru_cache(maxsize=None)
     def index_for(position: int) -> str:
         digits = str(position)
         candidates = [number(position)]
@@ -55,6 +56,8 @@ def optimize_native_at(
                     continue
                 candidate = source + "[" + index_for(offset) + "]"
                 if len(candidate) < len(mapping[character]):
-                    changes[character] = (len(mapping[character]), len(candidate))
                     mapping[character] = candidate
+    changes = {key: (len(value), len(mapping[key]))
+               for key, value in baseline.items()
+               if len(mapping[key]) < len(value)}
     return mapping, changes
