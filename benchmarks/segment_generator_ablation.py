@@ -4,6 +4,7 @@ Compares the same encoder with only the new candidate family disabled.
 """
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 from unittest.mock import patch
@@ -15,7 +16,12 @@ CORPUS = Path(__file__).with_name("segment_generator_cases.json")
 
 
 def main() -> None:
-    cases = json.loads(CORPUS.read_text(encoding="utf-8"))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cases", type=Path, default=CORPUS)
+    args = parser.parse_args()
+    cases = json.loads(args.cases.read_text(encoding="utf-8"))
+    if not isinstance(cases, list) or any(not isinstance(x, str) for x in cases):
+        parser.error("Expected JSON array of strings")
     current = [len(encode(x)) for x in cases]
     encoder._tokens.cache_clear()
     try:
