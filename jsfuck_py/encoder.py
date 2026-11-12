@@ -138,11 +138,6 @@ def _tokens(text: str, optimize: bool) -> str:
     mapping = _mapping()
     if not text:
         return ""
-    # The legacy optimized grammar can incorrectly join mapping expressions
-    # for a literal '!+' pair. Preserve semantic correctness for this input
-    # family until an expression-tree printer can parenthesize it safely.
-    if optimize and "!+" in text:
-        return _tokens(text, False)
     if not optimize:
         parts = []
         pattern = re.compile("|".join(map(re.escape, _SIMPLE)) + "|.", re.DOTALL)
@@ -223,6 +218,11 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
         return ""
     if not isinstance(text, str):
         raise TypeError("text must be str")
+    # Escaped punctuation may alter the literal token stream before _tokens
+    # sees it. Constrain the entire encoding path for the known ambiguous
+    # '!+' sequence until expression-level parenthesization is available.
+    if optimize and "!+" in text:
+        return encode(text, optimize=False, wrap=wrap, parent_scope=parent_scope)
     mapping = _mapping()
     unmapped_count = sum(ch not in mapping for ch in text)
     if not unmapped_count:
