@@ -74,10 +74,12 @@ the typical real-world savings for JavaScript source files.
 
 This generator adds a complete JSFuck source-construction candidate for
 eligible inputs. It consumes more Python encoding work even when the old
-candidate wins. The existing ad hoc wall-clock benchmark is sensitive
-to `_tokens` caching and run order; do not interpret these timings as
-reliable throughput measurements. Before applying this method to large
-real-world source files, benchmark fresh-cache and warm-cache latency.
+candidate wins. A controlled diagnostic on GitHub Actions for the eight targeted cases
+reported **0.728s -> 0.810s** with the `_tokens` cache cleared before
+each run and **0.004s -> 0.004s** with a populated token cache.
+These are one-off wall-clock timings from a non-isolated CI runner,
+not statistically rigorous throughput measurements. Input-dependent
+encoding-time overhead remains a tradeoff to track on larger corpora.
 
 ## Code and reproduction
 
