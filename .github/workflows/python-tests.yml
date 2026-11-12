@@ -51,3 +51,4 @@ jobs:
       - run: python -m benchmarks.lexical_fusion_ablation
       - run: python -m benchmarks.escape_spelling_ablation
       - run: python -m benchmarks.function_constructor_study
+      - run: python -m benchmarks.numeric_separator_study
