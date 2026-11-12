@@ -179,12 +179,15 @@ class EncoderTests(unittest.TestCase):
         script = (
             "const fs=require('fs');"
             "const xs=JSON.parse(fs.readFileSync(0,'utf8'));"
-            "process.stdout.write(JSON.stringify(xs.map(x=>eval(x))))"
+            "process.stdout.write(JSON.stringify(xs.map((x,i)=>{"
+            "try{return eval(x)}catch(e){throw Error(i+\":\"+e.message)}"
+            "})))"
         )
         result = subprocess.run(
             ["node", "-e", script], input=json.dumps(expressions),
-            capture_output=True, text=True, check=True, timeout=40,
+            capture_output=True, text=True, check=False, timeout=40,
         )
+        self.assertEqual(result.returncode, 0, result.stderr[-900:])
         self.assertEqual(json.loads(result.stdout), values)
 
     def test_typed_primitive_reductions(self):
