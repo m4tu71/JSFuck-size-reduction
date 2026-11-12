@@ -42,3 +42,8 @@ jobs:
       - run: python -m benchmarks.segment_generator_ablation
       - run: python -m benchmarks.segment_generator_ablation --cases benchmarks/javascript_samples.json
       - run: python -m benchmarks.generator_segmentation_study
+      - run: python -m benchmarks.interval_batch_ablation
+      - run: python -m benchmarks.interval_batch_ablation --cases benchmarks/javascript_samples.json
+      - run: python -m benchmarks.segment_generator_ablation
+      - run: python -m benchmarks.repeat_range_ablation
+      - run: python -m benchmarks.repeat_range_ablation --cases benchmarks/javascript_samples.json

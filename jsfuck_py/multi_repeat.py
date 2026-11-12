@@ -50,7 +50,7 @@ def multi_repeat_candidates(
 ) -> list[tuple[int, str]]:
     """Return cost-filtered (end, expression) for repeated substrings."""
     candidates: list[tuple[int, str]] = []
-    for unit_len in range(2, 9):
+    for unit_len in range(2, MAX_UNIT_LENGTH + 1):
         copies = repeated_unit_at(text, start, unit_len)
         if copies < min_copies:
             continue

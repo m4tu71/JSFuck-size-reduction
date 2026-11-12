@@ -11,6 +11,19 @@ Python encoder versions and PEP 440 for development version identifiers.
 - Add machine-readable benchmark reports with version metadata.
 
 
+## 0.1.0.dev8 (development)
+
+- Fix the multi-character repeat candidate search to actually cover unit
+  lengths 9–16, as previously documented (the previous inner loop stopped
+  at 8).
+- Add controlled 2–8 versus 2–16 repeat-range benchmarks, including the
+  representative 20-source JavaScript corpus.
+- Research Unicode numeric batches spanning multiple separated expensive
+  runs; keep this bounded probe outside the default encoder after it
+  showed no incremental improvement on the tested corpora.
+- Add Node.js semantic tests for longer repeated units and mixed Unicode
+  intervals; record the negative interval-search result.
+
 ## 0.1.0.dev7 (development)
 
 - Evaluate adjacent character generation through Function escape restoration,
@@ -87,7 +100,7 @@ Python encoder versions and PEP 440 for development version identifiers.
 ## Versioning policy
 
 - First release target: **0.1.0** (not yet released).
-- Current development version: **0.1.0.dev7**.
+- Current development version: **0.1.0.dev8**.
 - Increase **PATCH** for backwards-compatible bug fixes.
 - Increase **MINOR** for backwards-compatible features and optimization strategies.
 - Increase **MAJOR** for incompatible changes in the public Python API or its output contract.

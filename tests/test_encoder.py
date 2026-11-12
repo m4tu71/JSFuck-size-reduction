@@ -76,6 +76,8 @@ class EncoderTests(unittest.TestCase):
             "XYZ" * 16,
             "aaaa" * 20,
             "abcabcxabcabc",
+            "getElementById" * 16,
+            "function(x)" * 12,
         )
         js = ("const fs=require('fs');"
               "const items=JSON.parse(fs.readFileSync(0,'utf8'));"
@@ -107,6 +109,47 @@ class EncoderTests(unittest.TestCase):
         self.assertTrue(has_multi_repeat("abc" * 6))
         self.assertFalse(has_multi_repeat("abcdefghijk"))
         self.assertGreaterEqual(repeated_unit_at("abc" * 6, 0, 3), 6)
+        self.assertTrue(has_multi_repeat("getElementById" * 4))
+        self.assertGreaterEqual(repeated_unit_at("getElementById" * 4, 0, 14), 4)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_interval_search_unicode_roundtrip(self):
+        from jsfuck_py.encoder import _tokens
+        from jsfuck_py.interval_search import best_interval_candidate, batch_windows
+        from jsfuck_py.numeric_batch import numeric_batch_candidates
+
+        examples = (
+            "ab" + "漢字" * 14 + "cd" + "😀😃" * 12 + "ef",
+            "prefix" + "あ" * 16 + "middle" + "い" * 16 + "suffix",
+            "const x='" + "Ωλ" * 16 + "';",
+        )
+        script = (
+            "const fs=require('fs');"
+            "const expressions=JSON.parse(fs.readFileSync(0,'utf8'));"
+            "process.stdout.write(JSON.stringify(expressions.map(x=>eval(x))))"
+        )
+        expressions = []
+        for source in examples:
+            candidate, interval = best_interval_candidate(
+                source, _mapping(), encode,
+                lambda value: numeric_batch_candidates(
+                    value, lambda text: _tokens(text, True)
+                ),
+            )
+            self.assertLessEqual(len(candidate), len(encode(source)))
+            self.assertTrue(set(candidate) <= set("[]()!+"))
+            expressions.append(candidate)
+        result = subprocess.run(
+            ["node", "-e", script], input=json.dumps(expressions),
+            capture_output=True, text=True, timeout=40, check=True,
+        )
+        self.assertEqual(json.loads(result.stdout), list(examples))
+
+    def test_interval_windows_include_merged_runs(self):
+        from jsfuck_py.interval_search import batch_windows
+        source = "prefix" + "漢" * 10 + "abc" + "字" * 10 + "suffix"
+        runs = batch_windows(source, _mapping())
+        self.assertIn((6, len(source) - 6), runs)
 
     def test_mapping_alphabet(self):
         self.assertTrue(all(set(v) <= set("[]()!+") for v in _mapping().values()))
