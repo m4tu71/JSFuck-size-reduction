@@ -11,6 +11,16 @@ Python encoder versions and PEP 440 for development version identifiers.
 - Add machine-readable benchmark reports with version metadata.
 
 
+## 0.1.0.dev6 (development)
+
+- Add opt-in shared-substring reconstruction through an isolated generated
+  function parameter, encoding each repeated fragment once.
+- Bound substring and helper-name candidate search; compare full emitted
+  JSFuck expression lengths and keep the legacy result if no improvement.
+- Provide an optional identifier-exclusion safeguard for names already
+  present in the original JavaScript source without modifying that source.
+- Add Node.js roundtrip, identifier avoidance, and dedicated ablation tests.
+
 ## 0.1.0.dev5 (development)
 
 - Explore batched decimal code reconstruction using String.fromCharCode and
@@ -66,7 +76,7 @@ Python encoder versions and PEP 440 for development version identifiers.
 ## Versioning policy
 
 - First release target: **0.1.0** (not yet released).
-- Current development version: **0.1.0.dev5**.
+- Current development version: **0.1.0.dev6**.
 - Increase **PATCH** for backwards-compatible bug fixes.
 - Increase **MINOR** for backwards-compatible features and optimization strategies.
 - Increase **MAJOR** for incompatible changes in the public Python API or its output contract.
