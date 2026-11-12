@@ -22,4 +22,4 @@ version = {attr = "jsfuck_py._version.__version__"}
 include = ["jsfuck_py*"]
 
 [tool.setuptools.package-data]
-jsfuck_py = ["mapping.json", "backslash_jsfuck_050.b64"]
+jsfuck_py = ["mapping.json", "backslash_jsfuck_050.b64", "reference_fallback_050.b64"]

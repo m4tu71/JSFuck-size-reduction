@@ -93,8 +93,16 @@ def _expand_mapping() -> dict[str, str]:
         _SOURCE.with_name("backslash_jsfuck_050.b64").read_text(
             encoding="ascii").strip()
     ).decode("ascii")
-    for unstable in ("E", "R", ":", "?"):
-        mapping.pop(unstable, None)
+    # The original Python expansion cannot reconstruct these four
+    # RegExp-derived mappings reliably. Load reproducible, semantically
+    # tested recipes from the pinned official 0.5.0 encoder instead.
+    fallback = json.loads(base64.b64decode(
+        _SOURCE.with_name("reference_fallback_050.b64").read_text(
+            encoding="ascii").strip()
+    ).decode("ascii"))
+    if set(fallback) != {"E", "R", ":", "?"}:
+        raise ValueError("Unexpected pinned fallback character set")
+    mapping.update(fallback)
     mapping, _ = optimize_native_at(mapping, _number)
     assert all(set(v) <= _ALLOWED for v in mapping.values())
     return mapping
@@ -120,6 +128,7 @@ def _escape(ch: str) -> str:
     )
 
 
+@lru_cache(maxsize=4096)
 def _tokens(text: str, optimize: bool) -> str:
     mapping = _mapping()
     if not text:
@@ -159,18 +168,28 @@ def _tokens(text: str, optimize: bool) -> str:
                 best[start] = candidate
     assert best[0] is not None
     result = best[0][1]
+    candidates = [result + "+[]" if len(text) == 1 and text.isdigit() else result]
     if text[0] in "0123456789":
-        # An initial numeric value is coerced into a string by the next
-        # string-valued operand, avoiding a redundant array wrapper.
+        # A leading numeric primitive can be coerced into a string by the
+        # next string-valued operand. Otherwise force string conversion.
         numeric = _number(int(text[0]))
         if len(text) > 1:
             assert best[1] is not None
-            candidate = numeric + "+" + best[1][1]
+            candidates.append(numeric + "+" + best[1][1])
         else:
-            candidate = numeric + "+[]"
-        baseline = result + ("+[]" if len(text) == 1 else "")
-        return min((baseline, candidate), key=len)
-    return result
+            candidates.append(numeric + "+[]")
+
+    # Once the prefix is already a string, a trailing JS primitive is
+    # stringified automatically by '+'. This avoids '(primitive+[])'.
+    # Encode the prefix independently to preserve type correctness.
+    for literal, primitive in _SIMPLE.items():
+        if text.endswith(literal) and len(text) > len(literal):
+            prefix = _tokens(text[:-len(literal)], optimize)
+            # A following unary + must be grouped to avoid parsing "++".
+            raw_suffix = "(" + primitive + ")" if primitive.startswith("+") else primitive
+            candidates.append(prefix + "+" + raw_suffix)
+
+    return min(candidates, key=len)
 
 
 def encode(text: str, *, optimize: bool = True, wrap: bool = False,
@@ -186,29 +205,39 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
         raise TypeError("text must be str")
     mapping = _mapping()
     unmapped_count = sum(ch not in mapping for ch in text)
-
-    if unmapped_count > 1:
-        # The baseline uses 't' as a placeholder for backslashes and
-        # reconstructs it using split/join after generating the string.
-        payload = "".join(ch if ch in "0123456789.adefilnrsuN"
-                          else _escape(ch).replace("\\", "t")
-                          for ch in text)
-    elif unmapped_count == 1:
-        payload = "".join(_escape(ch) if ch in '"\\' or ch not in mapping
-                          else ch for ch in text)
+    if not unmapped_count:
+        output = _tokens(text, optimize)
     else:
-        payload = text
+        # Build both possible escape decoders, measuring the *complete*
+        # output including the Function constructor and split/join overhead.
+        # The upstream threshold is a heuristic, not a size optimum.
+        function = ("[][" + _tokens("at", optimize) + "]["
+                    + _tokens("constructor", optimize) + "]")
+        prefix = function + "(" + _tokens('return"', optimize) + "+"
+        suffix = "+" + _tokens('"', optimize) + ")()"
 
-    output = _tokens(payload, optimize)
-    if unmapped_count > 1:
-        output = ("(" + output + ")[" + _tokens("split", optimize) + "]("
-                  + _tokens("t", optimize) + ")[" + _tokens("join", optimize)
-                  + "](" + _tokens("\\", optimize) + ")")
-    if unmapped_count:
-        output = ("[][" + _tokens("at", optimize) + "]["
-                  + _tokens("constructor", optimize) + "]("
-                  + _tokens('return"', optimize) + "+"
-                  + output + "+" + _tokens('"', optimize) + ")()")
+        direct_payload = "".join(
+            _escape(ch) if ch in '"\\' or ch not in mapping else ch
+            for ch in text
+        )
+        direct = prefix + _tokens(direct_payload, optimize) + suffix
+
+        # The placeholder 't' stands for every escape slash. Literal 't'
+        # must also be escaped; the conservative alphabet is intentional.
+        safe = "0123456789.adefilnrsuN"
+        split_payload = "".join(
+            ch if ch in safe else _escape(ch).replace("\\", "t")
+            for ch in text
+        )
+        split = (
+            "(" + _tokens(split_payload, optimize) + ")["
+            + _tokens("split", optimize) + "]("
+            + _tokens("t", optimize) + ")["
+            + _tokens("join", optimize) + "]("
+            + _tokens("\\", optimize) + ")"
+        )
+        reconstructed = prefix + split + suffix
+        output = min((direct, reconstructed), key=len)
 
     if wrap:
         function = "[][" + _tokens("at", optimize) + "][" + _tokens("constructor", optimize) + "]"

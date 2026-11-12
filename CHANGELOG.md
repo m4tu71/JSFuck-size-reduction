@@ -10,10 +10,20 @@ Python encoder versions and PEP 440 for development version identifiers.
 - Add cost-based character recipes and native-function string tokens.
 - Add machine-readable benchmark reports with version metadata.
 
+
+## 0.1.0.dev1 (development)
+
+- Choose the shorter of direct escape decoding and placeholder split/join
+  based on total generated JSFuck length, not the count of unknown characters.
+- Omit redundant string coercion for trailing `false`, `true`, `undefined`,
+  `NaN` and `Infinity`, preserving JavaScript's unary-plus parsing rules.
+- Restore validated official fallback mappings for `E`, `R`, `:` and `?`.
+  Pinned recipes can be regenerated using `tools/generate_reference_fallback.py`.
+
 ## Versioning policy
 
 - First release target: **0.1.0** (not yet released).
-- Current development version: **0.1.0.dev0**.
+- Current development version: **0.1.0.dev1**.
 - Increase **PATCH** for backwards-compatible bug fixes.
 - Increase **MINOR** for backwards-compatible features and optimization strategies.
 - Increase **MAJOR** for incompatible changes in the public Python API or its output contract.

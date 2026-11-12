@@ -93,3 +93,37 @@ inside a larger constructor or string pipeline.
 - https://github.com/aemkei/jsfuck/issues/146 (capital P via
   Array.fromAsync/Promise; requires runtime compatibility checks)
 - https://github.com/aemkei/jsfuck (reference sources and documentation)
+
+## Additional experiments: 0.1.0.dev1
+
+**Cost-based escape path:** Generate the direct-escape and split/join
+reconstruction alternatives and compare their complete JSFuck output lengths.
+This supersedes the fixed threshold of two unmapped characters. Both branches
+are checked with Node.js round-trip tests including Unicode and literal slashes.
+
+**Trailing primitive conversion:** When a string prefix ends in `false`,
+`true`, `undefined`, `NaN` or `Infinity`, omit the unnecessary
+`+[]` coercion and let JavaScript's string addition do it. Protect unary
+plus expressions with parentheses to avoid `++` parse errors.
+
+**Reference mapping gaps:** The Python port previously omitted `E`, `R`,
+`:` and `?` because its regex-constructor expansion did not round-trip.
+These are now stored as pinned upstream 0.5.0 fallback recipes and validated
+by the per-character semantics tests. As a result, the current measured
+`??` case matches the official length (2597), rather than regressing to 4175.
+
+Selected measured examples (string mode, official -> experimental):
+
+| Input | Official | Python |
+|---|---:|---:|
+| `falsefalse` | 17 | 12 |
+| `truefalse` | 18 | 13 |
+| `xfalse` | 941 | 936 |
+| `xNaN` | 944 | 941 |
+| `??` | 2597 | 2597 |
+| `E:R` | 3908 | 3908 |
+
+**Further work:** Fixing the reference parity removes misleading deficits,
+but these examples are not representative corpus-wide savings. A larger,
+versioned benchmark corpus is the next priority before claiming typical
+performance improvements.

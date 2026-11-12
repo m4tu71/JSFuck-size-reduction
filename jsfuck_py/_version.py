@@ -3,4 +3,4 @@
 Follow PEP 440 for development releases; use v-prefixed Git tags for releases.
 """
 
-__version__ = "0.1.0.dev0"
+__version__ = "0.1.0.dev1"
