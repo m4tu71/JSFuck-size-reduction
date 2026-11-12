@@ -1,6 +1,6 @@
 # JSFuck size reduction
 
-**Python encoder version:** `0.1.0.dev4` (development; first stable release planned as `0.1.0`).
+**Python encoder version:** `0.1.0.dev5` (development; first stable release planned as `0.1.0`).
 
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
@@ -95,7 +95,7 @@ The reference JSFuck 0.5.0 release is a *separate version*.
 
 To prepare a release after tests pass:
 
-1. Update `jsfuck_py/_version.py` from `0.1.0.dev4` to `0.1.0`
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev5` to `0.1.0`
    (or the next planned version), and update `CHANGELOG.md`.
 2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
    at the merged release commit, then publish its GitHub release.
@@ -146,3 +146,19 @@ python -m jsfuck_py.benchmark --cases benchmarks/repetition_cases.json
 ```
 
 These are intentionally selected inputs, not estimates of typical savings.
+
+## Numeric-code Unicode batching
+
+For sufficiently long expensive strings, the Python encoder now evaluates
+`String.fromCharCode` and `String.fromCodePoint` using a JSFuck-only
+`split / reduce / apply / bind` invocation path. It compares both candidates
+against the older escape-decoder path and returns the shortest valid result.
+
+```sh
+python -m jsfuck_py.benchmark --cases benchmarks/long_unicode_cases.json
+python -m benchmarks.numeric_batch_ablation
+python -m benchmarks.numeric_batch_ablation --cases benchmarks/numeric_batch_cases.json
+```
+
+Batched code points generally have high fixed costs. Small inputs may be
+unchanged; see the research document for measured crossover examples.
