@@ -1,0 +1,21 @@
+[
+  "afalseb",
+  "xtruey",
+  "xundefinedy",
+  "xNaNy",
+  "aInfinityb",
+  "falsefalsefalse",
+  "1true2",
+  "0NaN1",
+  "false0true",
+  "1false2true3",
+  "if(true){alert(1)}",
+  "const test=false;",
+  "var ready=true;",
+  "const x=undefined;",
+  "let y=NaN;",
+  "if(false){}",
+  "truefalse",
+  "console.log(true)",
+  "const ok=true;console.log(ok)"
+]

@@ -1,6 +1,6 @@
 # JSFuck size reduction
 
-**Python encoder version:** `0.1.0.dev2` (development; first stable release planned as `0.1.0`).
+**Python encoder version:** `0.1.0.dev3` (development; first stable release planned as `0.1.0`).
 
 Experimental Python JSFuck encoder that measures output character count against the
 reference encoder at [jsfuck.com](https://jsfuck.com/).
@@ -95,7 +95,7 @@ The reference JSFuck 0.5.0 release is a *separate version*.
 
 To prepare a release after tests pass:
 
-1. Update `jsfuck_py/_version.py` from `0.1.0.dev2` to `0.1.0`
+1. Update `jsfuck_py/_version.py` from `0.1.0.dev3` to `0.1.0`
    (or the next planned version), and update `CHANGELOG.md`.
 2. Merge the reviewed PR; create an annotated Git tag `v0.1.0` pointing
    at the merged release commit, then publish its GitHub release.
@@ -120,3 +120,14 @@ python -m benchmarks.ablation --cases benchmarks/native_suffix_cases.json
 
 The suffix optimization alone did not reduce output on the 20-source JavaScript
 sample; see `docs/optimization-research.md` for the controlled ablation.
+
+## Typed literal optimizations
+
+Typed dynamic programming tracks when addition is guaranteed to concatenate
+strings. It shortens primitive substrings without changing JavaScript values;
+operator-heavy ambiguous cases use a conservative fallback.
+
+```sh
+python -m benchmarks.typed_ablation
+python -m benchmarks.typed_ablation --cases benchmarks/typed_primitive_cases.json
+```

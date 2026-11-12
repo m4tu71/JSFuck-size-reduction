@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .at_optimization import native_string_tokens, optimize_native_at
 from .substring_search import native_suffix_tokens
+from .typed_concat import shortest_concatenation
 
 _ALLOWED = frozenset("[]()!+")
 _SIMPLE = {
@@ -193,6 +194,16 @@ def _tokens(text: str, optimize: bool) -> str:
             raw_suffix = "(" + primitive + ")" if primitive.startswith("+") else primitive
             candidates.append(prefix + "+" + raw_suffix)
 
+    # Typed DP considers primitive tokens at every position. Keep the
+    # previous optimizer as a candidate to avoid regressions.
+    # Literal operator characters have complex reference mappings, and a
+    # generic typed addition may create ambiguous ++ / !+ token boundaries.
+    # Use the already validated legacy path until grammar-aware parsing is
+    # available for these cases.
+    if not any(symbol in text for symbol in "!+"):
+        candidates.append(
+            shortest_concatenation(text, mapping, _native_tokens(), _SIMPLE, _number)
+        )
     return min(candidates, key=len)
 
 
@@ -207,6 +218,11 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
         return ""
     if not isinstance(text, str):
         raise TypeError("text must be str")
+    # Escaped punctuation may alter the literal token stream before _tokens
+    # sees it. Constrain the entire encoding path for the known ambiguous
+    # '!+' sequence until expression-level parenthesization is available.
+    if optimize and "!+" in text:
+        return encode(text, optimize=False, wrap=wrap, parent_scope=parent_scope)
     mapping = _mapping()
     unmapped_count = sum(ch not in mapping for ch in text)
     if not unmapped_count:

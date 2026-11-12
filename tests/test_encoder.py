@@ -1,4 +1,5 @@
 import json
+import random
 import shutil
 import subprocess
 import unittest
@@ -137,6 +138,82 @@ class EncoderTests(unittest.TestCase):
                       "xInfinity", "falsefalse", "truefalse", "1false"):
             with self.subTest(value=value):
                 self.assertLess(len(encode(value)), len(encode(value, optimize=False)))
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_typed_primitive_tokens_in_middle(self):
+        values = (
+            "afalseb", "atruen", "xundefinedy", "xNaNy",
+            "aInfinityb", "falsefalsefalse", "1true2", "0NaN1",
+            "false0true", "1false2true3", "truefalse",
+        )
+        for value in values:
+            with self.subTest(value=value):
+                result = encode(value)
+                program = (
+                    "process.stdout.write(JSON.stringify(eval(" +
+                    json.dumps(result) + ")))"
+                )
+                completed = subprocess.run(
+                    ["node", "-e", program], capture_output=True, text=True,
+                    timeout=20, check=True,
+                )
+                self.assertEqual(json.loads(completed.stdout), value)
+                self.assertLessEqual(len(result), len(encode(value, optimize=False)))
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_ambiguous_punctuation_baseline(self):
+        value = "1undefined!+"
+        for optimized in (False, True):
+            expr = encode(value, optimize=optimized)
+            script = "process.stdout.write(JSON.stringify(eval(" + json.dumps(expr) + ")))"
+            result = subprocess.run(
+                ["node", "-e", script], capture_output=True, text=True,
+                timeout=20,
+            )
+            with self.subTest(optimized=optimized):
+                self.assertEqual(result.returncode, 0, "suffix="+repr(expr[-200:])+"; "+result.stderr[-300:])
+                self.assertEqual(json.loads(result.stdout), value)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_typed_concatenation_seeded_roundtrips(self):
+        # Deterministic mutation corpus: operator precedence and coercion
+        # bugs often escape one-off examples. Evaluate all cases in one Node
+        # subprocess to keep this regression test inexpensive.
+        generator = random.Random(20261112)
+        pieces = (
+            "false", "true", "undefined", "NaN", "Infinity",
+            "0", "1", "2", "3", "a", "b", "x", "!",
+            "+", "[]", "at", "foo",
+        )
+        values = [
+            "".join(generator.choices(pieces, k=generator.randint(1, 5)))
+            for _ in range(120)
+        ]
+        expressions = [encode(value) for value in values]
+        script = (
+            "const fs=require('fs');"
+            "const xs=JSON.parse(fs.readFileSync(0,'utf8'));"
+            "process.stdout.write(JSON.stringify(xs.map((x,i)=>{"
+            "try{return eval(x)}catch(e){throw Error(i+\":\"+e.message+\":\"+x.slice(-80))}"
+            "})))"
+        )
+        result = subprocess.run(
+            ["node", "-e", script], input=json.dumps(expressions),
+            capture_output=True, text=True, check=False, timeout=40,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr[-900:])
+        self.assertEqual(json.loads(result.stdout), values)
+
+    def test_typed_primitive_reductions(self):
+        # Middle tokens are not optimized by the older trailing-token rule.
+        from jsfuck_py.encoder import _mapping, _native_tokens, _number, _SIMPLE
+        from jsfuck_py.typed_concat import shortest_concatenation
+
+        text = "afalseb"
+        candidate = shortest_concatenation(
+            text, _mapping(), _native_tokens(), _SIMPLE, _number
+        )
+        self.assertLess(len(candidate), len(encode(text, optimize=False)))
 
     def test_optimizer_no_worse_for_direct_mapping(self):
         for value in ["0", "1", "2", "01", "10", "1234", "false", "truefalse", "abc123", "Infinity", "undefined"]:
