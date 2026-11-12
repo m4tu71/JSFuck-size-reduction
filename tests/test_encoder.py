@@ -161,6 +161,20 @@ class EncoderTests(unittest.TestCase):
                 self.assertLessEqual(len(result), len(encode(value, optimize=False)))
 
     @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_ambiguous_punctuation_baseline(self):
+        value = "1undefined!+"
+        for optimized in (False, True):
+            expr = encode(value, optimize=optimized)
+            script = "process.stdout.write(JSON.stringify(eval(" + json.dumps(expr) + ")))"
+            result = subprocess.run(
+                ["node", "-e", script], capture_output=True, text=True,
+                timeout=20,
+            )
+            with self.subTest(optimized=optimized):
+                self.assertEqual(result.returncode, 0, "suffix="+repr(expr[-200:])+"; "+result.stderr[-300:])
+                self.assertEqual(json.loads(result.stdout), value)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
     def test_typed_concatenation_seeded_roundtrips(self):
         # Deterministic mutation corpus: operator precedence and coercion
         # bugs often escape one-off examples. Evaluate all cases in one Node
