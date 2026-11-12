@@ -225,3 +225,59 @@ Run:
 python -m benchmarks.typed_ablation
 python -m benchmarks.typed_ablation --cases benchmarks/typed_primitive_cases.json
 ```
+
+## 0.1.0.dev4: precedence-aware expression composition and repeats
+
+Typed concatenation now builds `Expression` nodes and inspects operator depth
+when appending a right operand. A top-level addition and a leading unary plus
+require grouping, but nested additions inside balanced `[]` or `()` do not.
+The result avoids blanket parentheses and retains the primitive-substring
+length reductions measured in 0.1.0.dev3. The known literal `!+` input still
+uses the conservative encoder fallback.
+
+### Repeated-character search
+
+The `String.prototype.repeat` method can be more economical than encoding a
+costly character many times. The Python encoder generates bounded counts
+(8–256), uses either numeric or digit-string count expressions, and only
+offers candidate tokens when their *full* JSFuck expression is shorter.
+Numeric method arguments are coerced according to JavaScript semantics.
+This is an input-dependent optimization, not a universal replacement.
+
+Controlled comparison with the same Python encoder but repeat candidates
+disabled (8 deliberately repetition-heavy examples):
+
+| Input | Previous Python | With repeat | Saving |
+|---|---:|---:|---:|
+| `a` repeated 64 | 1,023 | 1,023 | 0 |
+| `x` repeated 32 | 29,855 | 1,988 | 27,867 |
+| `0` repeated 64 | 381 | 381 | 0 |
+| `ab` + 40 `z` + `cd` | 38,592 | 2,285 | 36,307 |
+| `false` repeated 15 | 62 | 62 | 0 |
+| JS source containing 64 `x` characters | 9,055 | 7,223 | 1,832 |
+| JS source containing 128 `a` characters | 6,906 | 5,963 | 943 |
+| JS source containing 64 `0` characters | 5,253 | 5,253 | 0 |
+
+Total: **91,127 → 24,178**, saving **66,949 (73.47%)**. The selected
+20 ordinary JavaScript snippets yielded **zero incremental saving** from
+repeat tokens. A high percentage on the repeated-character corpus must not
+be reported as a typical improvement on JavaScript source code.
+
+Official JSFuck 0.5.0 gives the same 29,855-character baseline for 32 `x`
+and 38,592 characters for the 40-`z` case; the new Python encoder returns
+1,988 and 2,285 characters respectively.
+
+### Future research
+
+- Extend bounded repeat exploration to repeated **substrings** (e.g.
+  `"abc"` repeated) and compare the actual cost of encoding the base string.
+- Replace opaque mapping strings with syntax-tree nodes, with typed values
+  and a formatter that can safely absorb the special `!+` fallback.
+- Evaluate JSFuck's documented multi-argument invocation techniques using
+  `reduce`/`bind`, comparing the heavy setup cost against two-argument
+  `slice(start,end)` and other calls.
+- Expand the source benchmark across projects and JavaScript engines.
+  Node.js passing alone does not guarantee native-function formatting
+  parity in other runtimes.
+
+Reference: https://github.com/aemkei/jsfuck/blob/main/README.md

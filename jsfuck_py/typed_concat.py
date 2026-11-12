@@ -1,12 +1,60 @@
-"""Typed, cost-based concatenation for JSFuck string expressions.
+"""Precedence-safe, typed dynamic programming for JSFuck concatenation.
 
-The search distinguishes a standalone non-string operand from a guaranteed
-string prefix. This is important because JavaScript addition can be numeric
-until at least one operand forces string concatenation.
+Treat mapping recipes as opaque JavaScript expressions: a textual '+' inside a
+recipe may be an addition, unary operator, or part of property access. Their
+syntax cannot safely be spliced into a larger expression without grouping.
+The printer groups unknown operands and only elides parentheses for small,
+explicitly known atomic primitives.
 """
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True, slots=True)
+class Expression:
+    source: str
+    is_string: bool
+
+    def as_string(self) -> "Expression":
+        if self.is_string:
+            return self
+        # Addition is left associative; with an empty array on the right,
+        # intermediate numeric additions complete before string conversion.
+        return Expression(self.source + "+[]", True)
+
+
+def needs_rhs_grouping(source: str) -> bool:
+    """Determine if a JSFuck expression must be grouped as an addend.
+
+    Skip balanced parenthesized and bracketed subexpressions. A leading unary
+    plus would cause a lexical '++' after a binary plus, while top-level
+    additions would change grouping if directly appended on the right.
+    """
+    if source.startswith("+"):
+        return True
+    depth = 0
+    for char in source:
+        if char in "([":
+            depth += 1
+        elif char in ")]":
+            depth -= 1
+            if depth < 0:
+                raise ValueError("Unbalanced JSFuck expression")
+        elif char == "+" and depth == 0:
+            return True
+    if depth != 0:
+        raise ValueError("Unbalanced JSFuck expression")
+    return False
+
+
+def concatenate(left: Expression, right: Expression) -> Expression:
+    """Compose expressions with correct precedence and string semantics."""
+    if not (left.is_string or right.is_string):
+        raise ValueError("Two non-string operands can perform numeric addition")
+    rhs = f"({right.source})" if needs_rhs_grouping(right.source) else right.source
+    return Expression(left.source + "+" + rhs, True)
 
 
 def shortest_concatenation(
@@ -16,73 +64,62 @@ def shortest_concatenation(
     primitives: dict[str, str],
     number: Callable[[int], str],
 ) -> str:
-    """Return a JSFuck expression that evaluates to the given string.
-
-    Search only well-typed additions: when a prefix is not yet a string, its
-    next operand must be a mapped character or native string token. The final
-    expression is guaranteed to be string-valued.
-    """
+    """Find the shortest string-valued expression using typed token states."""
     if not text:
         return ""
 
-    n = len(text)
-    string: list[str | None] = [None] * (n + 1)
-    pending: list[str | None] = [None] * (n + 1)
+    size = len(text)
+    strings: list[Expression | None] = [None] * (size + 1)
+    pending: list[Expression | None] = [None] * (size + 1)
 
-    def relax(table: list[str | None], end: int, candidate: str) -> None:
-        current = table[end]
-        if current is None or len(candidate) < len(current):
-            table[end] = candidate
+    def relax(state: list[Expression | None], end: int, candidate: Expression) -> None:
+        old = state[end]
+        if old is None or len(candidate.source) < len(old.source):
+            state[end] = candidate
 
-    def append(prefix: str, expression: str, raw: bool, force_group: bool = False) -> str:
-        # Numerical recipes can contain additions of their own. Group them
-        # when appended to a string, or `1+1` would become `"x"+true+true`.
-        # An array literal is already a single syntactic operand.
-        needs_group = force_group or (raw and "+" in expression and not expression.startswith("["))
-        operand = "(" + expression + ")" if needs_group else expression
-        return prefix + "+" + operand
-
-    # Every candidate is (end_offset, expression, guarantees_string).
-    for start in range(n):
-        choices: list[tuple[int, str, bool]] = []
-        character = text[start]
-        choices.append((start + 1, mapping[character], not character.isdigit()))
-        if character in "0123456789":
-            choices.append((start + 1, number(int(character)), False))
-        choices.extend(
-            (start + len(word), expression, False)
-            for word, expression in primitives.items()
+    for start in range(size):
+        char = text[start]
+        # Mapped digits are arrays and become strings when added to strings.
+        # The other character mappings are guaranteed string-valued.
+        options = [(
+            start + 1,
+            Expression(mapping[char], not char.isdigit())
+        )]
+        if char.isascii() and char.isdigit():
+            options.append((start + 1, Expression(number(int(char)), False)))
+        options.extend(
+            (
+                start + len(word),
+                Expression(expr, False),
+            )
+            for word, expr in primitives.items()
             if text.startswith(word, start)
         )
-        choices.extend(
-            (start + len(word), expression, True)
-            for word, expression in tokens.items()
+        options.extend(
+            (start + len(word), Expression(expr, True))
+            for word, expr in tokens.items()
             if text.startswith(word, start)
         )
 
-        for end, expression, is_string in choices:
+        for end, expr in options:
             if start == 0:
-                relax(string if is_string else pending, end, expression)
-                if not is_string:
-                    relax(string, end, expression + "+[]")
+                relax(strings if expr.is_string else pending, end, expr)
+                if not expr.is_string:
+                    relax(strings, end, expr.as_string())
                 continue
 
-            if string[start] is not None:
-                # Recipes for punctuation can contain nested operator syntax;
-                # group them when placed after binary concatenation.
-                force_group = end == start + 1 and character in "!+"
-                relax(string, end, append(string[start], expression, not is_string, force_group))
-            if pending[start] is not None and is_string:
-                force_group = end == start + 1 and character in "!+"
-                relax(string, end, append(pending[start], expression, False, force_group))
+            prefix = strings[start]
+            if prefix is not None:
+                relax(strings, end, concatenate(prefix, expr))
+            previous = pending[start]
+            if previous is not None and expr.is_string:
+                relax(strings, end, concatenate(previous, expr))
 
-    results: list[str] = []
-    if string[n] is not None:
-        results.append(string[n])
-    if pending[n] is not None:
-        # Force conversion when the entire input consists of a primitive or
-        # a one-character digit array. No untyped value escapes this function.
-        results.append(pending[n] + "+[]")
-    if not results:
-        raise ValueError("No typed concatenation for input")
-    return min(results, key=len)
+    candidates = [
+        state.source
+        for state in (strings[size], pending[size].as_string() if pending[size] else None)
+        if state is not None
+    ]
+    if not candidates:
+        raise ValueError("No string-valued JSFuck expression found")
+    return min(candidates, key=len)
