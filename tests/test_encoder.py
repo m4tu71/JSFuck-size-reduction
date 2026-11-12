@@ -81,6 +81,14 @@ class EncoderTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 0, completed.stderr[-650:])
         self.assertEqual(completed.stdout.strip(), "42")
 
+    def test_native_method_shortcuts(self):
+        # These savings rely on the pinned reference/native function format.
+        self.assertEqual(len(encode("native")), 162)
+        self.assertLess(len(encode("function add(a,b){return a+b}")), 1602)
+        for text in ("native", "function add(a,b){return a+b}", "at"):
+            with self.subTest(text=text):
+                self.assertLessEqual(len(encode(text)), len(encode(text, optimize=False)))
+
     def test_optimizer_no_worse_for_direct_mapping(self):
         for value in ["0", "1", "2", "01", "10", "1234", "false", "truefalse", "abc123", "Infinity", "undefined"]:
             self.assertLessEqual(len(encode(value)), len(encode(value, optimize=False)))
