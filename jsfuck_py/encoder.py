@@ -231,8 +231,7 @@ def _tokens(text: str, optimize: bool) -> str:
 def encode(text: str, *, optimize: bool = True, wrap: bool = False,
            parent_scope: bool = False, share_substrings: bool = False,
            avoid_source_identifiers: bool = True,
-           fuse_wrapped_unicode: bool = False,
-           search_escape_spellings: bool = False) -> str:
+           fuse_wrapped_unicode: bool = False) -> str:
     """Encode JavaScript source as a JSFuck expression.
 
     With wrap=False, evaluating the expression yields the original source
@@ -249,8 +248,7 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
         return encode(text, optimize=False, wrap=wrap, parent_scope=parent_scope,
                       share_substrings=share_substrings,
                       avoid_source_identifiers=avoid_source_identifiers,
-                      fuse_wrapped_unicode=fuse_wrapped_unicode,
-                      search_escape_spellings=search_escape_spellings)
+                      fuse_wrapped_unicode=fuse_wrapped_unicode)
     mapping = _mapping()
     unmapped_count = sum(ch not in mapping for ch in text)
     if not unmapped_count:
@@ -339,9 +337,7 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
     # Arbitrary source rewriting can change semantics and is forbidden here.
     if fuse_wrapped_unicode and optimize and wrap and not parent_scope:
         from .fused_wrapper_study import direct_unicode_function_candidate
-        fused = direct_unicode_function_candidate(
-            text, search_spellings=search_escape_spellings
-        )
+        fused = direct_unicode_function_candidate(text)
         if fused is not None and len(fused) < len(output):
             output = fused
 
