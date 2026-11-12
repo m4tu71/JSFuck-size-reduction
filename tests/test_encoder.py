@@ -30,7 +30,8 @@ class EncoderTests(unittest.TestCase):
     def test_roundtrip(self):
         values = ["0", "1", "2", "01", "10", "0abc", "1abc", "3", "false", "true", "undefined", "NaN",
                   "Infinity", "Hello world!", "const x=1;", '"\\',
-                  "あ😀", "~!~", "a\nb"]
+                  "あ😀", "~!~", "a\nb", "~~", "~~!", "?x?", "\\~\\",
+                  "E:R", "a?b!", "\\" + "\\" + "~", "あい", "😀😀", "t~t~"]
         for value in values:
             with self.subTest(value=value):
                 expression = encode(value)
