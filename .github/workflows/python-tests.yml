@@ -50,3 +50,4 @@ jobs:
       - run: python -m benchmarks.fused_wrapper_study
       - run: python -m benchmarks.lexical_fusion_ablation
       - run: python -m benchmarks.escape_spelling_ablation
+      - run: python -m benchmarks.function_constructor_study
