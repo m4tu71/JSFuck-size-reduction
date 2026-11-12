@@ -1,4 +1,5 @@
 import json
+import random
 import shutil
 import subprocess
 import unittest
@@ -158,6 +159,33 @@ class EncoderTests(unittest.TestCase):
                 )
                 self.assertEqual(json.loads(completed.stdout), value)
                 self.assertLessEqual(len(result), len(encode(value, optimize=False)))
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_typed_concatenation_seeded_roundtrips(self):
+        # Deterministic mutation corpus: operator precedence and coercion
+        # bugs often escape one-off examples. Evaluate all cases in one Node
+        # subprocess to keep this regression test inexpensive.
+        generator = random.Random(20261112)
+        pieces = (
+            "false", "true", "undefined", "NaN", "Infinity",
+            "0", "1", "2", "3", "a", "b", "x", "!",
+            "+", "[]", "at", "foo",
+        )
+        values = [
+            "".join(generator.choices(pieces, k=generator.randint(1, 5)))
+            for _ in range(120)
+        ]
+        expressions = [encode(value) for value in values]
+        script = (
+            "const fs=require('fs');"
+            "const xs=JSON.parse(fs.readFileSync(0,'utf8'));"
+            "process.stdout.write(JSON.stringify(xs.map(x=>eval(x))))"
+        )
+        result = subprocess.run(
+            ["node", "-e", script], input=json.dumps(expressions),
+            capture_output=True, text=True, check=True, timeout=40,
+        )
+        self.assertEqual(json.loads(result.stdout), values)
 
     def test_typed_primitive_reductions(self):
         # Middle tokens are not optimized by the older trailing-token rule.
