@@ -4,6 +4,7 @@ This is an optimization experiment, not a promise of globally shortest output.
 """
 from __future__ import annotations
 
+import base64
 import json
 import re
 from functools import lru_cache
@@ -84,14 +85,12 @@ def _expand_mapping() -> dict[str, str]:
                                    else c for c in value)
     else:
         raise ValueError("Mapping expansion did not converge")
-    # RegExp-derived recipes are not portable to the current Node runtime.
-    # Derive backslash without RegExp, via String.fromCharCode(92).
-    def text_value(text: str) -> str:
-        return "+".join(mapping[ch] for ch in text)
-
-    mapping["\\"] = ("([]+[])[" + text_value("constructor") + "]["
-                     + text_value("fromCharCode") + "]("
-                     + text_value("92") + ")")
+    # Preserve the pinned upstream recipe for backslash. Rebuilding it
+    # through RegExp can produce runtime-dependent or oversized expressions.
+    mapping["\\\\"] = base64.b64decode(
+        _SOURCE.with_name("backslash_jsfuck_050.b64").read_text(
+            encoding="ascii").strip()
+    ).decode("ascii")
     for unstable in ("E", "R", ":", "?"):
         mapping.pop(unstable, None)
     assert all(set(v) <= _ALLOWED for v in mapping.values())
