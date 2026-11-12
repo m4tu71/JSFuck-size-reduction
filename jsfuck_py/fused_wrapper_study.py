@@ -10,12 +10,11 @@ console.log call is supported. The candidate is never used by the encoder.
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
 
 from .encoder import _mapping, _tokens
 
 
-_PATTERN = re.compile(r'^(console\\.log\\()("[^"\\\\]*")(\\);?)$', re.DOTALL)
+_PATTERN = re.compile(r'^(console\.log\()("[^"\\]*")(\);?)$', re.DOTALL)
 
 
 def direct_unicode_function_candidate(source: str) -> str | None:
