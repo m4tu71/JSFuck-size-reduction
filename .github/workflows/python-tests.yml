@@ -38,3 +38,4 @@ jobs:
       - run: python -m benchmarks.numeric_batch_ablation
       - run: python -m benchmarks.numeric_batch_ablation --cases benchmarks/numeric_batch_cases.json
       - run: python -m benchmarks.shared_substring_ablation
+      - run: python -m benchmarks.generated_expression_cse
