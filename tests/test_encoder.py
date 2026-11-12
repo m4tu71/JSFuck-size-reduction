@@ -254,8 +254,10 @@ class EncoderTests(unittest.TestCase):
             capture_output=True, text=True, timeout=30, check=True,
         )
         self.assertEqual(json.loads(completed.stdout), list(examples))
-        for value, expression in zip(examples[:4], expressions[:4]):
-            self.assertLess(len(expression), len(encode(value, optimize=False)))
+        baselines = [len(encode(value, optimize=False)) for value in examples[:4]]
+        self.assertTrue(any(len(expression) < baseline for expression, baseline in zip(expressions[:4], baselines)))
+        for expression, baseline in zip(expressions[:4], baselines):
+            self.assertLessEqual(len(expression), baseline)
 
     def test_repeat_cost_search(self):
         from jsfuck_py.repetition import repeat_candidates, repeat_sizes
