@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 NATIVE_AT_TEXT = "function at() { [native code] }"
+NATIVE_METHODS = ("at", "flat", "fill", "find", "map", "filter", "join", "sort", "entries")
 
 # (runtime prefix, JSFuck expression). Expression prefixes must be coerced
 # into a string by the following native-function object.
@@ -29,8 +30,6 @@ def optimize_native_at(
 ) -> tuple[dict[str, str], dict[str, tuple[int, int]]]:
     """Return a new mapping and {character: (old_size, new_size)} improvements."""
     mapping = baseline.copy()
-    at_key = baseline["a"] + "+" + baseline["t"]
-    at_method = "[][" + at_key + "]"
     changes = {}
 
     def index_for(position: int) -> str:
@@ -42,14 +41,20 @@ def optimize_native_at(
                               "+".join(baseline[d] for d in digits[1:]))
         return min(candidates, key=len)
 
-    for prefix, expression in PREFIXES:
-        source = "(" + expression + "+" + at_method + ")"
-        rendered = prefix + NATIVE_AT_TEXT
-        for offset, character in enumerate(rendered):
-            if character not in mapping:
-                continue
-            candidate = source + "[" + index_for(offset) + "]"
-            if len(candidate) < len(mapping[character]):
-                changes[character] = (len(mapping[character]), len(candidate))
-                mapping[character] = candidate
+    for method in NATIVE_METHODS:
+        if any(ch not in baseline for ch in method):
+            continue
+        method_key = "+".join(baseline[ch] for ch in method)
+        native_method = "[][" + method_key + "]"
+        native_text = f"function {method}() {{ [native code] }}"
+        for prefix, expression in PREFIXES:
+            source = "(" + expression + "+" + native_method + ")"
+            rendered = prefix + native_text
+            for offset, character in enumerate(rendered):
+                if character not in mapping:
+                    continue
+                candidate = source + "[" + index_for(offset) + "]"
+                if len(candidate) < len(mapping[character]):
+                    changes[character] = (len(mapping[character]), len(candidate))
+                    mapping[character] = candidate
     return mapping, changes
