@@ -78,3 +78,27 @@ def numeric_batch_candidates(
         output[method] = array + reduce_key + "(" + callback + ")"
 
     return output
+
+
+def expensive_runs(
+    source: str, direct_mapping: dict[str, str], minimum: int = 16
+) -> list[tuple[int, int]]:
+    """Return long contiguous stretches not supported by direct char mapping.
+
+    Prefer long runs to avoid paying the substantial batch decoder setup cost.
+    Python string offsets are Unicode code points, not UTF-16 code units;
+    each chosen run is independently converted to appropriate JS numeric codes.
+    """
+    runs: list[tuple[int, int]] = []
+    start: int | None = None
+    for index, char in enumerate(source):
+        if char not in direct_mapping:
+            if start is None:
+                start = index
+        elif start is not None:
+            if index - start >= minimum:
+                runs.append((start, index))
+            start = None
+    if start is not None and len(source) - start >= minimum:
+        runs.append((start, len(source)))
+    return sorted(runs, key=lambda p: p[1] - p[0], reverse=True)
