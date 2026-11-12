@@ -66,6 +66,48 @@ class EncoderTests(unittest.TestCase):
                 self.assertEqual(json.loads(result.stdout), value)
                 self.assertTrue(set(expr) <= set("[]()!+"))
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_multi_character_repeat_roundtrip(self):
+        cases = (
+            "abc" * 24,
+            "function(x)" * 12,
+            "console.log(" * 18,
+            "let xyz=1;" * 16,
+            "XYZ" * 16,
+            "aaaa" * 20,
+            "abcabcxabcabc",
+        )
+        js = ("const fs=require('fs');"
+              "const items=JSON.parse(fs.readFileSync(0,'utf8'));"
+              "process.stdout.write(JSON.stringify(items.map(x=>eval(x))))")
+        expressions = [encode(source) for source in cases]
+        result = subprocess.run(
+            ["node", "-e", js], input=json.dumps(expressions),
+            capture_output=True, text=True, timeout=40, check=True,
+        )
+        self.assertEqual(json.loads(result.stdout), list(cases))
+        self.assertTrue(all(set(x) <= set("[]()!+") for x in expressions))
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_multi_repeat_execution_wrapper(self):
+        source = "globalThis.__multi_repeat='abcabcabcabc';"
+        expression = encode(source, wrap=True)
+        script = (
+            "eval(" + json.dumps(expression) + ");"
+            "process.stdout.write(globalThis.__multi_repeat)"
+        )
+        completed = subprocess.run(
+            ["node", "-e", script], capture_output=True, text=True,
+            timeout=25, check=True,
+        )
+        self.assertEqual(completed.stdout, "abcabcabcabc")
+
+    def test_multi_character_repeat_candidate_enumeration(self):
+        from jsfuck_py.multi_repeat import has_multi_repeat, repeated_unit_at
+        self.assertTrue(has_multi_repeat("abc" * 6))
+        self.assertFalse(has_multi_repeat("abcdefghijk"))
+        self.assertGreaterEqual(repeated_unit_at("abc" * 6, 0, 3), 6)
+
     def test_mapping_alphabet(self):
         self.assertTrue(all(set(v) <= set("[]()!+") for v in _mapping().values()))
 
