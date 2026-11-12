@@ -1,0 +1,22 @@
+[
+  "console.log(1)",
+  "console.log('hello')",
+  "let a=1;",
+  "const x=42;",
+  "x=>x+1",
+  "Math.max(1,2)",
+  "if(true){alert(1)}",
+  "const a=[1,2,3];",
+  "function f(x){return x+1}",
+  "document.title",
+  "Promise.resolve(1)",
+  "Array.from([1,2])",
+  "JSON.stringify({a:1})",
+  "for(let i=0;i<3;i++){}",
+  "new Date()",
+  "(() => 42)()",
+  "let x=10;console.log(x)",
+  "const f=(x)=>x*x;",
+  "[1,2,3].map(x=>x+1)",
+  "'Hello, world!'"
+]
