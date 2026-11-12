@@ -186,29 +186,39 @@ def encode(text: str, *, optimize: bool = True, wrap: bool = False,
         raise TypeError("text must be str")
     mapping = _mapping()
     unmapped_count = sum(ch not in mapping for ch in text)
-
-    if unmapped_count > 1:
-        # The baseline uses 't' as a placeholder for backslashes and
-        # reconstructs it using split/join after generating the string.
-        payload = "".join(ch if ch in "0123456789.adefilnrsuN"
-                          else _escape(ch).replace("\\", "t")
-                          for ch in text)
-    elif unmapped_count == 1:
-        payload = "".join(_escape(ch) if ch in '"\\' or ch not in mapping
-                          else ch for ch in text)
+    if not unmapped_count:
+        output = _tokens(text, optimize)
     else:
-        payload = text
+        # Build both possible escape decoders, measuring the *complete*
+        # output including the Function constructor and split/join overhead.
+        # The upstream threshold is a heuristic, not a size optimum.
+        function = ("[][" + _tokens("at", optimize) + "]["
+                    + _tokens("constructor", optimize) + "]")
+        prefix = function + "(" + _tokens('return"', optimize) + "+"
+        suffix = "+" + _tokens('"', optimize) + ")()"
 
-    output = _tokens(payload, optimize)
-    if unmapped_count > 1:
-        output = ("(" + output + ")[" + _tokens("split", optimize) + "]("
-                  + _tokens("t", optimize) + ")[" + _tokens("join", optimize)
-                  + "](" + _tokens("\\", optimize) + ")")
-    if unmapped_count:
-        output = ("[][" + _tokens("at", optimize) + "]["
-                  + _tokens("constructor", optimize) + "]("
-                  + _tokens('return"', optimize) + "+"
-                  + output + "+" + _tokens('"', optimize) + ")()")
+        direct_payload = "".join(
+            _escape(ch) if ch in '"\\' or ch not in mapping else ch
+            for ch in text
+        )
+        direct = prefix + _tokens(direct_payload, optimize) + suffix
+
+        # The placeholder 't' stands for every escape slash. Literal 't'
+        # must also be escaped; the conservative alphabet is intentional.
+        safe = "0123456789.adefilnrsuN"
+        split_payload = "".join(
+            ch if ch in safe else _escape(ch).replace("\\", "t")
+            for ch in text
+        )
+        split = (
+            "(" + _tokens(split_payload, optimize) + ")["
+            + _tokens("split", optimize) + "]("
+            + _tokens("t", optimize) + ")["
+            + _tokens("join", optimize) + "]("
+            + _tokens("\\", optimize) + ")"
+        )
+        reconstructed = prefix + split + suffix
+        output = min((direct, reconstructed), key=len)
 
     if wrap:
         function = "[][" + _tokens("at", optimize) + "][" + _tokens("constructor", optimize) + "]"
