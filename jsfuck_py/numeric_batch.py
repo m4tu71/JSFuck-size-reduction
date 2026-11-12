@@ -49,8 +49,8 @@ def numeric_batch_candidates(
     split_key = "[" + encode_text("split") + "]"
 
     # Choose the cheapest delimiter absent from decimal character-code data.
-    if not separators or any(len(ch) != 1 or ch.isdigit() for ch in separators):
-        raise ValueError("separators must be non-empty single non-digit characters")
+    if not separators or any(not ch or any(c.isdigit() for c in ch) for ch in separators):
+        raise ValueError("separators must be non-empty strings without digits")
     sep = min(separators, key=lambda ch: len(encode_text(ch)))
 
     output: dict[str, str] = {}
