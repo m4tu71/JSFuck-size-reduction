@@ -177,7 +177,9 @@ def _tokens(text: str, optimize: bool) -> str:
     for literal, primitive in _SIMPLE.items():
         if text.endswith(literal) and len(text) > len(literal):
             prefix = _tokens(text[:-len(literal)], optimize)
-            candidates.append(prefix + "+" + primitive)
+            # A following unary + must be grouped to avoid parsing "++".
+            raw_suffix = "(" + primitive + ")" if primitive.startswith("+") else primitive
+            candidates.append(prefix + "+" + raw_suffix)
 
     return min(candidates, key=len)
 
