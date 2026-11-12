@@ -22,5 +22,4 @@ jobs:
       - run: python -c "import jsfuck_py; from importlib.metadata import version; assert version('jsfuck-size-reduction') == jsfuck_py.__version__"
       - run: python -m unittest discover -s tests -v
       - run: python -m jsfuck_py.benchmark
-      - run: python tools/generate_reference_fallback.py
       - run: python -m jsfuck_py.benchmark --wrap
