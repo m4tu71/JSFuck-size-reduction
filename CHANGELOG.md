@@ -11,6 +11,20 @@ Python encoder versions and PEP 440 for development version identifiers.
 - Add machine-readable benchmark reports with version metadata.
 
 
+## 0.1.0.dev11 (development)
+
+- Add a cost-selected, single-Function UTF-16 batch generator for
+  sufficiently long Unicode-rich inputs, avoiding apply/bind/reduce setup
+  in the previously tested numeric-batch pipeline.
+- Use Array.prototype.join() to insert comma-separated character codes
+  inside a dynamically compiled Function body without emitting commas
+  in JSFuck source.
+- Bound the new search to 64–1024 characters with at least 32 unmapped
+  characters; compare full expression lengths and preserve prior outputs
+  whenever shorter.
+- Study primitive-word separators, including "false" and "NaN", with
+  Node.js Unicode roundtrips and controlled size ablations.
+
 ## 0.1.0.dev10 (development)
 
 - Extend the opt-in fused Unicode execution wrapper beyond one console.log
@@ -123,7 +137,7 @@ Python encoder versions and PEP 440 for development version identifiers.
 ## Versioning policy
 
 - First release target: **0.1.0** (not yet released).
-- Current development version: **0.1.0.dev10**.
+- Current development version: **0.1.0.dev11**.
 - Increase **PATCH** for backwards-compatible bug fixes.
 - Increase **MINOR** for backwards-compatible features and optimization strategies.
 - Increase **MAJOR** for incompatible changes in the public Python API or its output contract.
